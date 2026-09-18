@@ -22,14 +22,22 @@ export const getProjectReleaseCardView = async (projectId: number | string) => {
     });
     const list = res.data?.data || res.data || [];
     const arrayList = Array.isArray(list) ? list : (list ? [list] : []);
-    return { data: arrayList };
+    return { 
+      status: res.data?.status || "Success",
+      statusCode: res.data?.statusCode || "200",
+      data: arrayList 
+    };
   } catch {
     try {
       const res = await axios.get(ENDPOINTS.releaseActiveByProject(Number(projectId)), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const active = res.data?.data || res.data;
-      return { data: active ? [active] : [] };
+      return { 
+        status: res.data?.status || "Success",
+        statusCode: res.data?.statusCode || "200",
+        data: active ? [active] : [] 
+      };
     } catch {
       return { data: [] };
     }
