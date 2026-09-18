@@ -82,6 +82,9 @@ public class ProjectAllocation {
     @Transient
     @JsonProperty("roleId")
     public Long getRoleId() {
+        if (employee != null && employee.getUser() != null && employee.getUser().getRoles() != null && !employee.getUser().getRoles().isEmpty()) {
+            return employee.getUser().getRoles().iterator().next().getId();
+        }
         if ("Project Manager".equalsIgnoreCase(role)) {
             return 2L;
         }
