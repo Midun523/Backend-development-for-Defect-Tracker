@@ -1,6 +1,6 @@
 package com.defecttracker.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -43,6 +43,32 @@ public class ProjectAllocation {
     @Column(length = 30)
     private String status = "ACTIVE"; // ACTIVE, DEALLOCATED, EXTENDED
 
+    @JsonGetter("status")
+    public Object getStatusForJson() {
+        if ("ACTIVE".equalsIgnoreCase(this.status)) return true;
+        if ("DEALLOCATED".equalsIgnoreCase(this.status)) return false;
+        return this.status;
+    }
+
+    @JsonSetter("status")
+    public void setStatusFromJson(Object val) {
+        if (val instanceof Boolean) {
+            this.status = ((Boolean) val) ? "ACTIVE" : "DEALLOCATED";
+        } else if (val != null) {
+            this.status = val.toString();
+        }
+    }
+
+    @JsonIgnore
+    public String getStatus() {
+        return this.status;
+    }
+
+    @JsonIgnore
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -59,6 +85,24 @@ public class ProjectAllocation {
             return (f + " " + l).trim();
         }
         return "Unknown";
+    }
+
+    @Transient
+    @JsonProperty("firstName")
+    public String getFirstName() {
+        return employee != null ? employee.getFirstName() : null;
+    }
+
+    @Transient
+    @JsonProperty("lastName")
+    public String getLastName() {
+        return employee != null ? employee.getLastName() : null;
+    }
+
+    @Transient
+    @JsonProperty("email")
+    public String getEmail() {
+        return employee != null ? employee.getEmail() : null;
     }
 
     @Transient
