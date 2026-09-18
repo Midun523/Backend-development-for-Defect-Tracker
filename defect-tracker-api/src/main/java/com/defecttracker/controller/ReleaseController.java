@@ -141,10 +141,10 @@ public class ReleaseController {
     public ResponseEntity<ApiResponse<ReleaseTestCase>> updateTestCaseStatus(
             @PathVariable Long releaseId,
             @PathVariable Long id,
-            @RequestBody Map<String, String> body
+            @RequestBody Map<String, Object> body
     ) {
-        String status = body.getOrDefault("status", "NOT_RUN");
-        String comment = body.get("comment");
+        String status = body.containsKey("status") ? String.valueOf(body.get("status")) : "NOT_RUN";
+        String comment = body.containsKey("comment") && body.get("comment") != null ? String.valueOf(body.get("comment")) : null;
         ReleaseTestCase rtc = releaseService.updateReleaseTestCaseStatus(releaseId, id, status, comment);
         return ResponseEntity.ok(ApiResponse.success(rtc, "Test case execution status updated"));
     }

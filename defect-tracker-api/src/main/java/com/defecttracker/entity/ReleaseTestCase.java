@@ -45,4 +45,52 @@ public class ReleaseTestCase {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("testcaseNo")
+    public String getTestcaseNo() {
+        return testCase != null ? testCase.getTestcaseNo() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("description")
+    public String getDescription() {
+        return testCase != null ? testCase.getDescription() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("steps")
+    public String getSteps() {
+        return testCase != null ? testCase.getDetailsSteps() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("expectedResult")
+    public String getExpectedResult() {
+        return testCase != null ? testCase.getExpectedResult() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("severityName")
+    public String getSeverityName() {
+        return testCase != null && testCase.getSeverity() != null ? testCase.getSeverity().getName() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("defectTypeName")
+    public String getDefectTypeName() {
+        return testCase != null && testCase.getDefectType() != null ? testCase.getDefectType().getName() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("subModuleName")
+    public String getSubModuleName() {
+        return testCase != null && testCase.getSubModule() != null ? testCase.getSubModule().getName() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("moduleName")
+    public String getModuleName() {
+        return testCase != null && testCase.getSubModule() != null && testCase.getSubModule().getModule() != null ? testCase.getSubModule().getModule().getName() : null;
+    }
 }
