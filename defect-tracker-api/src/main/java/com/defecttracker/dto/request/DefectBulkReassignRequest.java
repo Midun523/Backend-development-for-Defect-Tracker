@@ -1,0 +1,20 @@
+package com.defecttracker.dto.request;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class DefectBulkReassignRequest {
+    @NotNull(message = "Defect IDs list cannot be null")
+    private List<Long> defectIds;
+    @NotNull(message = "Assigned To ID is required")
+    private Long assignedToId;
+}
