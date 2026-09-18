@@ -23,8 +23,8 @@ export const getProjectReleaseCardView = async (projectId: number | string) => {
     const list = res.data?.data || res.data || [];
     const arrayList = Array.isArray(list) ? list : (list ? [list] : []);
     return { 
-      status: res.data?.status || "Success",
-      statusCode: res.data?.statusCode || "200",
+      status: "Success",
+      statusCode: "200",
       data: arrayList 
     };
   } catch {
@@ -34,8 +34,8 @@ export const getProjectReleaseCardView = async (projectId: number | string) => {
       });
       const active = res.data?.data || res.data;
       return { 
-        status: res.data?.status || "Success",
-        statusCode: res.data?.statusCode || "200",
+        status: "Success",
+        statusCode: "200",
         data: active ? [active] : [] 
       };
     } catch {
