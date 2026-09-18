@@ -26,7 +26,12 @@ export const getAllSubmoduleAllocatedDevBySubmoduleId = async (
     status: 'success',
     statusCode: 200,
     statusMessage: 'Success',
-    data: res.data?.data || [],
+    data: (res.data?.data || []).map((alloc: any) => ({
+      ...alloc,
+      employeeId: alloc.employeeId || alloc.employee?.id || alloc.employee?.userId,
+      submoduleId: alloc.submoduleId || alloc.subModule?.id,
+      employeeName: alloc.employeeName || (alloc.employee?.firstName ? `${alloc.employee.firstName} ${alloc.employee.lastName || ''}`.trim() : alloc.employee?.name),
+    })),
   };
 };
 

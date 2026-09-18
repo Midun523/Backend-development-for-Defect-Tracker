@@ -6,5 +6,6 @@ export const getActiveReleasesByProject = async (projectId: number) => {
   const res = await axios.get(ENDPOINTS.releaseActiveByProject(projectId), {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  return res.data?.data || [];
+  const data = res.data?.data;
+  return data ? [data] : [];
 };

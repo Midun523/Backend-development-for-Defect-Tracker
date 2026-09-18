@@ -563,7 +563,7 @@ export const TestExecution: React.FC = () => {
       setModulesError("");
 
       getModulesByProject(Number(selectedProject))
-        .then((data) => setModules(data.data))
+        .then((data) => setModules(Array.isArray(data) ? data : (data.data || [])))
 
         .catch((err) => {
           setModulesError(err.message);

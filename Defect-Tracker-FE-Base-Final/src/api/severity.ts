@@ -48,7 +48,22 @@ export const getSeverities = async (
   pageSize: number = 100
 ): Promise<GetSeveritiesResponse> => {
   const res = await axios.get(ENDPOINTS.severityPagination(page, pageSize));
-  return res.data;
+  // The UI expects res.data.content to be the array of severities.
+  // The backend ApiResponse has the paginated object in res.data.data
+  // So res.data is the ApiResponse. We need to ensure res.data.content exists.
+  const apiResponse = res.data;
+  if (apiResponse && apiResponse.data) {
+    const paginatedData = apiResponse.data;
+    if (paginatedData.content) {
+       // Attach content directly to the data object returned so res.data.content works
+       apiResponse.content = paginatedData.content;
+    } else if (Array.isArray(paginatedData)) {
+       apiResponse.content = paginatedData;
+    }
+  } else if (Array.isArray(apiResponse)) {
+     return { data: { content: apiResponse } } as any;
+  }
+  return apiResponse;
 };
 
 export const deleteSeverity = async (id: number) => {
