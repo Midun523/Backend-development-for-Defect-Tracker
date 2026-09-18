@@ -101,7 +101,60 @@ public class TestCaseServiceImpl implements TestCaseService {
     @Override
     public PaginatedResponse<TestCase> getTestCasesBySubModule(Long subModuleId, String description, Long defectTypeId, Long severityId, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
-        Page<TestCase> testCasePage = testCaseRepository.filterTestCases(subModuleId, description, defectTypeId, severityId, pageable);
+        String search = (description != null && !description.trim().isEmpty()) ? "%" + description.trim().toLowerCase() + "%" : null;
+
+        Page<TestCase> testCasePage;
+        if (search == null && defectTypeId == null && severityId == null) {
+            testCasePage = testCaseRepository.findBySubModuleId(subModuleId, pageable);
+        } else {
+            testCasePage = testCaseRepository.filterTestCases(subModuleId, search, defectTypeId, severityId, pageable);
+        }
+
+        return PaginatedResponse.<TestCase>builder()
+                .content(testCasePage.getContent())
+                .pageNumber(testCasePage.getNumber())
+                .pageSize(testCasePage.getSize())
+                .totalElements(testCasePage.getTotalElements())
+                .totalPages(testCasePage.getTotalPages())
+                .first(testCasePage.isFirst())
+                .last(testCasePage.isLast())
+                .build();
+    }
+
+    @Override
+    public PaginatedResponse<TestCase> getTestCasesByModule(Long moduleId, String description, Long defectTypeId, Long severityId, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
+        String search = (description != null && !description.trim().isEmpty()) ? "%" + description.trim().toLowerCase() + "%" : null;
+
+        Page<TestCase> testCasePage;
+        if (search == null && defectTypeId == null && severityId == null) {
+            testCasePage = testCaseRepository.findBySubModuleModuleId(moduleId, pageable);
+        } else {
+            testCasePage = testCaseRepository.filterTestCasesByModule(moduleId, search, defectTypeId, severityId, pageable);
+        }
+
+        return PaginatedResponse.<TestCase>builder()
+                .content(testCasePage.getContent())
+                .pageNumber(testCasePage.getNumber())
+                .pageSize(testCasePage.getSize())
+                .totalElements(testCasePage.getTotalElements())
+                .totalPages(testCasePage.getTotalPages())
+                .first(testCasePage.isFirst())
+                .last(testCasePage.isLast())
+                .build();
+    }
+
+    @Override
+    public PaginatedResponse<TestCase> getTestCasesByProject(Long projectId, String description, Long defectTypeId, Long severityId, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
+        String search = (description != null && !description.trim().isEmpty()) ? "%" + description.trim().toLowerCase() + "%" : null;
+
+        Page<TestCase> testCasePage;
+        if (search == null && defectTypeId == null && severityId == null) {
+            testCasePage = testCaseRepository.findBySubModuleModuleProjectId(projectId, pageable);
+        } else {
+            testCasePage = testCaseRepository.filterTestCasesByProject(projectId, search, defectTypeId, severityId, pageable);
+        }
 
         return PaginatedResponse.<TestCase>builder()
                 .content(testCasePage.getContent())

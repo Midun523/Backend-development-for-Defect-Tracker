@@ -182,15 +182,7 @@ export const ModuleManagement: React.FC = () => {
     if (dev.roleId && roleMapById[dev.roleId]) {
       return roleMapById[dev.roleId];
     }
-    const roleStr = dev.role || getRoleFromUserWithRole(dev.userWithRole);
-    const normRole = normalizeRoleName(roleStr);
-    if (MODULE_ROLES.has(normRole) || SUBMODULE_ROLES.has(normRole)) {
-      return normRole;
-    }
-    if (roleMapByName[normRole]) {
-      return roleMapByName[normRole];
-    }
-    return normRole;
+    return "";
   };
 
   const getRoleTypedDevelopers = () => {
@@ -202,8 +194,7 @@ export const ModuleManagement: React.FC = () => {
       if (dev.roleId && developerRoleIds.includes(Number(dev.roleId))) {
         return true;
       }
-      const normRole = normalizeRoleName(dev.role || getRoleFromUserWithRole(dev.userWithRole));
-      if (developerRoleNames.map(normalizeRoleName).includes(normRole)) {
+      if (effType && developerRoleNames.map(normalizeRoleName).includes(effType)) {
         return true;
       }
       return false;
@@ -219,8 +210,7 @@ export const ModuleManagement: React.FC = () => {
       if (dev.roleId && moduleLeaderRoleIds.includes(Number(dev.roleId))) {
         return true;
       }
-      const normRole = normalizeRoleName(dev.role || getRoleFromUserWithRole(dev.userWithRole));
-      if (moduleLeaderRoleNames.map(normalizeRoleName).includes(normRole)) {
+      if (effType && moduleLeaderRoleNames.map(normalizeRoleName).includes(effType)) {
         return true;
       }
       return false;

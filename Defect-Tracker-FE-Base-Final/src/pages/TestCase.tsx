@@ -23,6 +23,7 @@ import { getAllProjects } from "../api/projectget";
 import {
   getTestCasesByProjectAndSubmodule,
   getTestCasesByProjectAndModule,
+  getTestCasesByProject,
   deleteTestCase,
 } from "../api/testCase/testCaseApi";
 import { getSeverities } from "../api/severity";
@@ -97,18 +98,27 @@ export const TestCase: React.FC = () => {
       { id: string; name: string; submodules: { id: string; name: string }[] }[]
     >
   >({});
-  const fetchAllTestCasesForProject = async (_projId: string) => {
+  const fetchAllTestCasesForProject = async (projId: string) => {
     try {
-      const testCases = mockDb.getTestCases();
-      const merged = testCases.map((tc: any) => ({
+      const response = await getTestCasesByProject(projId);
+      const moduleMap = Object.fromEntries(
+        projectModules.map((m: any) => [String(m.id), m.name]),
+      );
+      const merged = (response || []).map((tc: any) => ({
         ...tc,
         id: tc.id,
         no: tc.testcaseNo || tc.no,
+        testcaseNo: tc.testcaseNo || tc.no,
         testCaseId: tc.id,
+        moduleId: tc.moduleId || tc.subModule?.moduleId,
+        module: moduleMap[String(tc.moduleId)] || tc.moduleName || tc.module || "General",
+        subModuleId: tc.subModuleId || tc.subModule?.id,
+        subModule: tc.subModuleName || tc.subModule?.name || tc.subModule || "General",
         description: tc.description,
+        steps: tc.detailsSteps || tc.steps,
         expectedResult: tc.expectedResult,
-        severity: tc.severityName || tc.severity,
-        defectType: tc.defectTypeName || tc.type,
+        severity: ((severities || []).find((s) => s.id === (tc.severityId || tc.severity?.id))?.name || tc.severityName || tc.severity?.name || tc.severity || "") as TestCaseType["severity"],
+        type: ((defectTypes || []).find((dt) => dt.id === (tc.defectTypeId || tc.defectType?.id))?.name || tc.defectTypeName || tc.defectType?.name || tc.type || "") as TestCaseType["type"],
       }));
 
       const sorted = sortTestCasesByNo(merged as any);
@@ -1020,10 +1030,10 @@ export const TestCase: React.FC = () => {
 
     try {
       const response = await createTestCaseSub(subModuleId, payload);
-      if (response?.statusCode === 201 || response?.status === "Created") {
+      if (response?.statusCode === 200 || response?.statusCode === 201 || response?.status === "Created" || response?.status === "success") {
         setCreateAlert({
           isOpen: true,
-          message: response?.statusMessage || "Test case created successfully!",
+          message: response?.statusMessage || (response as any)?.message || "Test case created successfully!",
         });
 
       if (selectedModuleId) {
@@ -1474,15 +1484,15 @@ export const TestCase: React.FC = () => {
 
     setIsExporting(true);
     try {
-      const testCasesList = mockDb.getTestCases();
+      const testCasesList = allModuleTestCases.length > 0 ? allModuleTestCases : (selectedProjectId ? await getTestCasesByProject(selectedProjectId) : []);
       const headers = ["Test Case No", "Description", "Severity", "Defect Type", "Module", "Submodule"];
-      const rows = testCasesList.map(t => [
-        t.testcaseNo,
+      const rows = testCasesList.map((t: any) => [
+        t.testcaseNo || t.no,
         `"${(t.description || '').replace(/"/g, '""')}"`,
-        t.severityName || 'Medium',
-        t.defectTypeName || 'Functional Bug',
-        t.moduleName || 'Module',
-        t.subModuleName || 'Submodule',
+        t.severityName || t.severity || 'Medium',
+        t.defectTypeName || t.type || 'Functional Bug',
+        t.moduleName || t.module || 'Module',
+        t.subModuleName || t.subModule || 'Submodule',
       ]);
 
       const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
@@ -1832,16 +1842,19 @@ export const TestCase: React.FC = () => {
                       params.append("size", "100000");
 
                       
-                      let raw = mockDb.getTestCases(selectedSubmoduleId ? Number(selectedSubmoduleId) : undefined);
+                      let raw = allModuleTestCases;
+                      if (selectedSubmoduleId) {
+                        raw = raw.filter((tc: any) => String(tc.subModuleId) === String(selectedSubmoduleId));
+                      }
                       if (searchFilters.description) {
                         const term = searchFilters.description.toLowerCase();
-                        raw = raw.filter(tc => (tc.description || '').toLowerCase().includes(term));
+                        raw = raw.filter((tc: any) => (tc.description || '').toLowerCase().includes(term) || (tc.testcaseNo || tc.no || '').toLowerCase().includes(term));
                       }
                       if (searchFilters.typeId) {
-                        raw = raw.filter(tc => tc.defectTypeId === Number(searchFilters.typeId));
+                        raw = raw.filter((tc: any) => tc.defectTypeId === Number(searchFilters.typeId));
                       }
                       if (searchFilters.severityId) {
-                        raw = raw.filter(tc => tc.severityId === Number(searchFilters.severityId));
+                        raw = raw.filter((tc: any) => tc.severityId === Number(searchFilters.severityId));
                       }
 
                       const normalized = raw.map((tc: any) => {

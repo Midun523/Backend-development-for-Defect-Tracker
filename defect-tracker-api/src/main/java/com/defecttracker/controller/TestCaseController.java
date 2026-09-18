@@ -22,7 +22,7 @@ public class TestCaseController {
 
     private final TestCaseService testCaseService;
 
-    @PostMapping("/sub-module/{subModuleId}/test-case")
+    @PostMapping({"/sub-module/{subModuleId}/test-case", "/submodule/{subModuleId}/test-case"})
     @Operation(summary = "Create test case for a submodule")
     public ResponseEntity<ApiResponse<TestCase>> createTestCase(
             @PathVariable Long subModuleId,
@@ -32,7 +32,7 @@ public class TestCaseController {
         return ResponseEntity.ok(ApiResponse.created(testCase, "Test case created successfully"));
     }
 
-    @GetMapping("/sub-module/{subModuleId}/test-case")
+    @GetMapping({"/sub-module/{subModuleId}/test-case", "/submodule/{subModuleId}/test-case"})
     @Operation(summary = "Get test cases for a submodule with optional filters & pagination")
     public ResponseEntity<ApiResponse<PaginatedResponse<TestCase>>> getTestCasesBySubModule(
             @PathVariable Long subModuleId,
@@ -46,7 +46,35 @@ public class TestCaseController {
         return ResponseEntity.ok(ApiResponse.success(p, "Test cases retrieved"));
     }
 
-    @GetMapping("/sub-module/{subModuleId}/test-case/{id}")
+    @GetMapping({"/module/{moduleId}/test-case", "/module/{moduleId}/test-cases"})
+    @Operation(summary = "Get test cases for a module with optional filters & pagination")
+    public ResponseEntity<ApiResponse<PaginatedResponse<TestCase>>> getTestCasesByModule(
+            @PathVariable Long moduleId,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) Long defectTypeId,
+            @RequestParam(required = false) Long severityId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1000") int size
+    ) {
+        PaginatedResponse<TestCase> p = testCaseService.getTestCasesByModule(moduleId, description, defectTypeId, severityId, page, size);
+        return ResponseEntity.ok(ApiResponse.success(p, "Test cases retrieved"));
+    }
+
+    @GetMapping({"/project/{projectId}/test-case", "/project/{projectId}/test-cases"})
+    @Operation(summary = "Get test cases for a project with optional filters & pagination")
+    public ResponseEntity<ApiResponse<PaginatedResponse<TestCase>>> getTestCasesByProject(
+            @PathVariable Long projectId,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) Long defectTypeId,
+            @RequestParam(required = false) Long severityId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1000") int size
+    ) {
+        PaginatedResponse<TestCase> p = testCaseService.getTestCasesByProject(projectId, description, defectTypeId, severityId, page, size);
+        return ResponseEntity.ok(ApiResponse.success(p, "Test cases retrieved"));
+    }
+
+    @GetMapping({"/sub-module/{subModuleId}/test-case/{id}", "/submodule/{subModuleId}/test-case/{id}"})
     @Operation(summary = "Get test case by ID")
     public ResponseEntity<ApiResponse<TestCase>> getTestCaseById(
             @PathVariable Long subModuleId,
@@ -56,7 +84,7 @@ public class TestCaseController {
         return ResponseEntity.ok(ApiResponse.success(testCase, "Test case found"));
     }
 
-    @PutMapping("/sub-module/{subModuleId}/test-case/{id}")
+    @PutMapping({"/sub-module/{subModuleId}/test-case/{id}", "/submodule/{subModuleId}/test-case/{id}"})
     @Operation(summary = "Update test case")
     public ResponseEntity<ApiResponse<TestCase>> updateTestCase(
             @PathVariable Long subModuleId,
@@ -67,7 +95,7 @@ public class TestCaseController {
         return ResponseEntity.ok(ApiResponse.success(testCase, "Test case updated successfully"));
     }
 
-    @DeleteMapping("/sub-module/{subModuleId}/test-case/{id}")
+    @DeleteMapping({"/sub-module/{subModuleId}/test-case/{id}", "/submodule/{subModuleId}/test-case/{id}"})
     @Operation(summary = "Delete test case")
     public ResponseEntity<ApiResponse<Void>> deleteTestCase(
             @PathVariable Long subModuleId,

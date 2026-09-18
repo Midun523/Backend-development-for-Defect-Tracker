@@ -71,4 +71,71 @@ public class TestCase {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("no")
+    public String fetchNo() {
+        return testcaseNo;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("steps")
+    public String fetchSteps() {
+        return detailsSteps;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("subModuleId")
+    public Long fetchSubModuleId() {
+        return subModule != null ? subModule.getId() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("subModuleName")
+    public String fetchSubModuleName() {
+        return subModule != null ? subModule.getName() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("moduleId")
+    public Long fetchModuleId() {
+        return subModule != null && subModule.getModule() != null ? subModule.getModule().getId() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("moduleName")
+    public String fetchModuleName() {
+        return subModule != null && subModule.getModule() != null ? subModule.getModule().getName() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("projectId")
+    public Long fetchProjectId() {
+        return subModule != null && subModule.getModule() != null && subModule.getModule().getProject() != null ? subModule.getModule().getProject().getId() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("severityId")
+    public Long fetchSeverityId() {
+        return severity != null ? severity.getId() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("severityName")
+    public String fetchSeverityName() {
+        return severity != null ? severity.getName() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("defectTypeId")
+    public Long fetchDefectTypeId() {
+        return defectType != null ? defectType.getId() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("defectTypeName")
+    public String fetchDefectTypeName() {
+        if (defectType == null) return null;
+        return defectType.getDefectTypeName() != null ? defectType.getDefectTypeName() : defectType.getName();
+    }
 }

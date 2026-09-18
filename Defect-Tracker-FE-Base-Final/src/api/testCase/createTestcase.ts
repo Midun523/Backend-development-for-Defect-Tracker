@@ -22,9 +22,10 @@ export async function createTestCase(subModuleId: number, testCaseData: CreateTe
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   return {
-    status: 'success',
-    statusCode: 200,
-    message: res.data?.message || 'Test case created successfully',
+    status: res.data?.status || 'success',
+    statusCode: res.data?.statusCode || res.status || 201,
+    message: res.data?.message || res.data?.statusMessage || 'Test case created successfully',
+    statusMessage: res.data?.message || res.data?.statusMessage || 'Test case created successfully',
     data: res.data?.data,
   };
 }
@@ -35,9 +36,9 @@ export const createTestCaseSub = async (subModuleId: number, payload: CreateTest
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   return {
-    status: 'success',
-    statusCode: 200,
-    statusMessage: res.data?.message || 'Test case created successfully',
+    status: res.data?.status || 'success',
+    statusCode: res.data?.statusCode || res.status || 201,
+    statusMessage: res.data?.message || res.data?.statusMessage || 'Test case created successfully',
     data: res.data?.data,
   };
 };
