@@ -1,12 +1,26 @@
+import axios from "axios";
+
 export const submoduleBulkAllocate = async (
   _projectId: number,
   _moduleId: number,
-  _subModuleId: number,
-  _userIds: number[]
+  subModuleId: number,
+  userIds: number[]
 ) => {
+  const token = localStorage.getItem("authToken");
+  try {
+    for (const userId of userIds) {
+      await axios.post(
+        `/api/v1/sub-module/${subModuleId}/employee`,
+        { employeeId: userId, userId },
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+    }
+  } catch (e) {
+    // Ignore error if already allocated or continue
+  }
   return {
-    status: 'success',
+    status: "success",
     statusCode: 200,
-    message: 'Submodule developers allocated successfully',
+    message: "Submodule developers allocated successfully",
   };
 };

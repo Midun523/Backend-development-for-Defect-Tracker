@@ -24,5 +24,6 @@ public interface ReleaseService {
     ReleaseTestCase getReleaseTestCase(Long releaseId, Long testCaseId);
     ReleaseTestCase assignQaToReleaseTestCase(Long releaseId, Long testCaseId, Long employeeId);
     ReleaseTestCase updateReleaseTestCaseStatus(Long releaseId, Long testCaseId, String status, String comment);
+    ReleaseTestCase updateReleaseTestCaseStatus(Long releaseId, Long testCaseId, String status, String comment, Long priorityId, Long assignedToId);
     List<TestCaseAllocationLog> getTestCaseAllocationLogs();
 }

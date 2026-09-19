@@ -203,61 +203,73 @@ const isDescriptionOnlyNumber = isOnlyNumberText(formData.description);
   // NEW: Fetch allocated users for the selected submodule
   // This mimics the Defects page mechanism
   // ------------------------------------------------------------
+  // Fetch allocated users for the project/submodule with fallback
+  // ------------------------------------------------------------
   useEffect(() => {
-    if (!formData.subModuleId || !selectedProjectId) {
+    if (!selectedProjectId) {
       setAllocatedUsers([]);
       return;
     }
     setIsAllocatedUsersLoading(true);
 
+    const fetchSubModuleDevs = formData.subModuleId
+      ? getAllSubmoduleAllocatedDevBySubmoduleId(Number(formData.subModuleId)).catch((error) => {
+          if (error?.response?.status === 404) return { data: [] } as any;
+          return { data: [] } as any;
+        })
+      : Promise.resolve({ data: [] } as any);
+
     Promise.all([
-      getAllSubmoduleAllocatedDevBySubmoduleId(Number(formData.subModuleId))
-        .catch((error) => {
-          // If 404, treat as no developers allocated yet
-          if (error?.response?.status === 404) {
-            return { data: [] } as any;
-          }
-          throw error;
-        }),
-      getDevelopersWithRolesByProjectId(selectedProjectId),
+      fetchSubModuleDevs,
+      getDevelopersWithRolesByProjectId(selectedProjectId).catch(() => ({ data: [] })),
     ])
       .then(([subModuleDevRes, projectDevsRaw]) => {
-        // 1. Extract employee IDs from submodule allocation response
         const assignedEmployeeIds = new Set(
-          (subModuleDevRes?.data || []).map((d: any) => Number(d.employeeId))
+          (subModuleDevRes?.data || []).map((d: any) => Number(d.employeeId || d.id || d.userId))
         );
 
-        // 2. Get all project developers
         const users = Array.isArray(projectDevsRaw)
           ? projectDevsRaw
           : projectDevsRaw?.data || projectDevsRaw?.users || [];
 
-        // 3. Map and filter to only those assigned to the submodule
         const mappedUsers = users
-          .map((user: any) => ({
-            userId: user.employeeId || user.userId || user.id,
-            userName:
-              user.firstName && user.lastName
-                ? `${user.firstName} ${user.lastName}`.trim()
-                : user.userName || user.name || "Unknown User",
-            empId: user.employeeId || user.userId || user.id,
-          }))
-          .filter((u: any) => u.userId && u.userName && assignedEmployeeIds.has(Number(u.userId)));
+          .map((user: any) => {
+            const id = user.employeeId || user.userId || user.id;
+            const firstName = user.firstName || "";
+            const lastName = user.lastName || "";
+            const fullName = (firstName && lastName)
+              ? `${firstName} ${lastName}`.trim()
+              : (user.userName || user.name || user.employeeName || "Developer");
+            const role = user.role || user.roleName || "";
+            return {
+              userId: id,
+              userName: role ? `${fullName} (${role})` : fullName,
+              empId: id,
+            };
+          })
+          .filter((u: any) => u.userId && u.userName);
 
-        setAllocatedUsers(mappedUsers);
+        let finalUsers = mappedUsers;
+        if (assignedEmployeeIds.size > 0) {
+          const subModuleFiltered = mappedUsers.filter((u: any) =>
+            assignedEmployeeIds.has(Number(u.userId))
+          );
+          if (subModuleFiltered.length > 0) {
+            finalUsers = subModuleFiltered;
+          }
+        }
 
-        
-        if (mappedUsers.length === 1) {
+        setAllocatedUsers(finalUsers);
+
+        if (finalUsers.length === 1) {
           setFormData(prev => ({
             ...prev,
-            assigntoId: mappedUsers[0].userId.toString(),
+            assigntoId: finalUsers[0].userId.toString(),
           }));
-        } else {
-          setFormData(prev => ({ ...prev, assigntoId: "" }));
         }
       })
       .catch((error) => {
-        console.error("Failed to fetch developers allocated to submodule:", error);
+        console.error("Failed to fetch developers allocated to project/submodule:", error);
         setAllocatedUsers([]);
       })
       .finally(() => setIsAllocatedUsersLoading(false));
@@ -356,17 +368,26 @@ const isDescriptionOnlyNumber = isOnlyNumberText(formData.description);
     setSuccess(true);
 
     const payload: any = {
+      projectId: Number(selectedProjectId || 1),
       description: formData.description,
+      title: formData.description,
+      steps: formData.steps,
       stepsToRecreation: formData.steps,
       expectedResult: "",
       actualResult: "",
       isAddTestCase: formData.testCaseRequired,
+      testCaseRequired: formData.testCaseRequired,
+      moduleId: formData.moduleId ? Number(formData.moduleId) : null,
+      modulesId: formData.moduleId ? Number(formData.moduleId) : null,
       subModuleId: formData.subModuleId ? Number(formData.subModuleId) : null,
       severityId: Number(formData.severityId),
       priorityId: Number(formData.priorityId),
       defectTypeId: Number(formData.typeId),
+      typeId: Number(formData.typeId),
       releaseId: formData.releaseId ? Number(formData.releaseId) : null,
+      releasesId: formData.releaseId ? Number(formData.releaseId) : null,
       assignedTo: formData.assigntoId ? Number(formData.assigntoId) : null,
+      assigntoId: formData.assigntoId ? Number(formData.assigntoId) : null,
     };
 
     try {
@@ -381,7 +402,13 @@ const isDescriptionOnlyNumber = isOnlyNumberText(formData.description);
       }
 
       const response = await addDefects(form as any);
-      if (response.status?.toLowerCase() === "created" || response.statusCode === 2000 || response.statusCode === 201) {
+      if (
+        response.status?.toLowerCase() === "created" ||
+        response.status?.toLowerCase() === "success" ||
+        response.statusCode === 2000 ||
+        response.statusCode === 201 ||
+        response.statusCode === 200
+      ) {
         showAlert("Defect added successfully!");
         setTimeout(() => {
           setSuccess(false);

@@ -84,24 +84,35 @@ export const getViewAllocations = async (employeeId?: any) => {
 };
 
 export const getDevelopersWithRolesByProjectId = async (projectId: number | string) => {
+  const token = localStorage.getItem("authToken");
   try {
-    const token = localStorage.getItem("authToken");
     const res = await axios.get(ENDPOINTS.projectAllocationProjectEmployee(Number(projectId)), {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     const allocations = res.data?.data || [];
     if (Array.isArray(allocations) && allocations.length > 0) {
       return {
-        data: allocations.map((alloc: any) => ({
-          id: alloc.employeeId || alloc.employee?.id || alloc.employee?.userId || alloc.id,
-          userId: alloc.employeeId || alloc.employee?.id || alloc.employee?.userId || alloc.id,
-          name: alloc.employeeName || (alloc.employee?.firstName ? `${alloc.employee.firstName} ${alloc.employee.lastName || ''}`.trim() : alloc.employee?.name) || 'Developer',
-          userWithRole: `${alloc.employeeName || (alloc.employee?.firstName ? `${alloc.employee.firstName} ${alloc.employee.lastName || ''}`.trim() : alloc.employee?.name) || 'Developer'} - ${alloc.role?.name || alloc.roleName || 'Developer'}`,
-          role: alloc.role?.name || alloc.roleName || 'Developer',
-          roleName: alloc.role?.name || alloc.roleName || 'Developer',
-          roleId: alloc.role?.id || alloc.roleId || 1,
-          projectAllocationId: alloc.id,
-        })),
+        data: allocations.map((alloc: any) => {
+          const empId = alloc.employeeId || alloc.employee?.id || alloc.employee?.userId || alloc.id;
+          const fullName =
+            alloc.employeeName ||
+            (alloc.employee?.firstName ? `${alloc.employee.firstName} ${alloc.employee.lastName || ""}`.trim() : alloc.employee?.name) ||
+            "Developer";
+          const roleName = alloc.role?.name || alloc.roleName || "Developer";
+          return {
+            id: empId,
+            userId: empId,
+            employeeId: empId,
+            name: fullName,
+            userName: fullName,
+            userFullName: fullName,
+            userWithRole: `${fullName} - ${roleName}`,
+            role: roleName,
+            roleName: roleName,
+            roleId: alloc.role?.id || alloc.roleId || 1,
+            projectAllocationId: alloc.id,
+          };
+        }),
       };
     }
   } catch (e) {
@@ -109,23 +120,29 @@ export const getDevelopersWithRolesByProjectId = async (projectId: number | stri
   }
 
   try {
-    const token = localStorage.getItem("authToken");
-    const res = await axios.get(ENDPOINTS.getAllUsers, {
+    const res = await axios.get(ENDPOINTS.employee, {
       params: { size: 1000 },
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     const users = res.data?.data?.content || res.data?.data || [];
     return {
-      data: users.map((emp: any) => ({
-        id: emp.id,
-        userId: emp.id,
-        name: `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.name || 'User',
-        userWithRole: `${emp.firstName || ''} ${emp.lastName || ''}`.trim() + ` - ${emp.roleName || 'Developer'}`,
-        role: emp.roleName || 'Developer',
-        roleName: emp.roleName || 'Developer',
-        roleId: emp.roleId || 1,
-        projectAllocationId: emp.id,
-      })),
+      data: users.map((emp: any) => {
+        const fullName = `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.name || "User";
+        const roleName = emp.roleName || emp.role?.name || "Developer";
+        return {
+          id: emp.id,
+          userId: emp.id,
+          employeeId: emp.id,
+          name: fullName,
+          userName: fullName,
+          userFullName: fullName,
+          userWithRole: `${fullName} - ${roleName}`,
+          role: roleName,
+          roleName: roleName,
+          roleId: emp.roleId || 1,
+          projectAllocationId: emp.id,
+        };
+      }),
     };
   } catch {
     return { data: [] };

@@ -145,7 +145,22 @@ public class ReleaseController {
     ) {
         String status = body.containsKey("status") ? String.valueOf(body.get("status")) : "NOT_RUN";
         String comment = body.containsKey("comment") && body.get("comment") != null ? String.valueOf(body.get("comment")) : null;
-        ReleaseTestCase rtc = releaseService.updateReleaseTestCaseStatus(releaseId, id, status, comment);
+
+        Long priorityId = null;
+        if (body.containsKey("priorityId") && body.get("priorityId") != null) {
+            try {
+                priorityId = Long.valueOf(String.valueOf(body.get("priorityId")));
+            } catch (Exception ignored) {}
+        }
+        Long assignedToId = null;
+        Object assignVal = body.get("assignedToId") != null ? body.get("assignedToId") : body.get("assignedTo");
+        if (assignVal != null) {
+            try {
+                assignedToId = Long.valueOf(String.valueOf(assignVal));
+            } catch (Exception ignored) {}
+        }
+
+        ReleaseTestCase rtc = releaseService.updateReleaseTestCaseStatus(releaseId, id, status, comment, priorityId, assignedToId);
         return ResponseEntity.ok(ApiResponse.success(rtc, "Test case execution status updated"));
     }
 

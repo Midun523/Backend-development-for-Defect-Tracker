@@ -66,7 +66,7 @@ import { useAccessibleProjects } from "../api/useAccessibleProjects";
 import { useSearchParams } from 'react-router-dom';
 import { OrbitProgress } from "react-loading-indicators";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = (import.meta.env.VITE_BASE_URL || "http://localhost:8087").replace(/\/+$/, "") + "/api/v1/";
 
 
 const ConfirmModal = ({
@@ -943,25 +943,30 @@ const filteredDefects = backendDefects.filter((d) => {
   const defectAdd = async () => {
     // Build payload according to the API specification
 
+    const resolvedProjectId = Number(selectedProjectId || (formData as any).projectId || projectId || 1);
     const payload: any = {
+      projectId: resolvedProjectId,
       description: formData.description,
+      title: formData.description,
+      steps: formData.steps,
       stepsToRecreation: formData.steps,
       expectedResult: "",
       actualResult: "",
       isAddTestCase: formData.testCaseRequired,
-      subModuleId: Number(formData.subModuleId),
-      severityId: Number(formData.severityId),
-      priorityId: Number(formData.priorityId),
-
-      defectTypeId: Number(formData.typeId),
-      releaseId: Number(formData.releaseId),
-
+      testCaseRequired: formData.testCaseRequired,
+      moduleId: formData.moduleId ? Number(formData.moduleId) : null,
+      modulesId: formData.moduleId ? Number(formData.moduleId) : null,
+      subModuleId: formData.subModuleId ? Number(formData.subModuleId) : null,
+      severityId: formData.severityId ? Number(formData.severityId) : null,
+      priorityId: formData.priorityId ? Number(formData.priorityId) : null,
+      defectTypeId: formData.typeId ? Number(formData.typeId) : null,
+      typeId: formData.typeId ? Number(formData.typeId) : null,
+      releaseId: formData.releaseId ? Number(formData.releaseId) : null,
+      releasesId: formData.releaseId ? Number(formData.releaseId) : null,
       assignedTo: formData.assigntoId ? Number(formData.assigntoId) : null,
-
+      assigntoId: formData.assigntoId ? Number(formData.assigntoId) : null,
       testCaseId: formData.testCaseId ? Number(formData.testCaseId) : null,
     };
-    // Remove testCaseId as it's commented out in the specification
-    // testCaseId: formData.testCaseId ? Number(formData.testCaseId) : null,
 
     console.warn("Submitting defect with payload:", payload);
 
@@ -990,11 +995,13 @@ const filteredDefects = backendDefects.filter((d) => {
       response = await addDefects(form as any);
       console.warn("📡 Add defect API response:", response);
 
-      // Check for success - API returns "Success" (uppercase) or statusCode 2000
+      // Check for success - API returns "success"/"created" or statusCode 200/201/2000
       if (
         response.status?.toLowerCase() === "created" ||
+        response.status?.toLowerCase() === "success" ||
         response.statusCode === 2000 ||
-        response.statusCode === 201
+        response.statusCode === 201 ||
+        response.statusCode === 200
       ) {
         // Handle successful defect addition
         showAlert("Defect added successfully!");
@@ -2971,55 +2978,79 @@ React.useEffect(() => {
         currentPage * defectsPerPage,
       );
 
-// Fetch allocated users for the selected SUBMODULE only
+// Fetch allocated users for the project/submodule with fallback
   useEffect(() => {
-    if (!formData.subModuleId || !selectedProjectId) {
+    if (!selectedProjectId) {
       setAllocatedUsers([]);
       return;
     }
     setIsAllocatedUsersLoading(true);
+
+    const fetchSubModuleDevs = formData.subModuleId
+      ? getAllSubmoduleAllocatedDevBySubmoduleId(Number(formData.subModuleId)).catch((error) => {
+          if (error?.response?.status === 404) return { data: [] } as any;
+          return { data: [] } as any;
+        })
+      : Promise.resolve({ data: [] } as any);
+
     Promise.all([
-      getAllSubmoduleAllocatedDevBySubmoduleId(
-        Number(formData.subModuleId),
-      ).catch((error) => {
-        if (error?.response?.status === 404) return { data: [] } as any; // no devs allocated yet
-        throw error;
-      }),
-      getDevelopersWithRolesByProjectId(selectedProjectId || undefined),
+      fetchSubModuleDevs,
+      getDevelopersWithRolesByProjectId(selectedProjectId || undefined).catch(() => ({ data: [] })),
+      getAllUsersSimple().catch(() => ({ data: [] })),
     ])
-      .then(([subModuleDevRes, projectDevsRaw]) => {
+      .then(([subModuleDevRes, projectDevsRaw, allUsersRaw]) => {
         const assignedEmployeeIds = new Set(
-          (subModuleDevRes?.data || []).map((d: any) => Number(d.employeeId)),
+          (subModuleDevRes?.data || []).map((d: any) => Number(d.employeeId || d.id || d.userId)),
         );
-        const users = Array.isArray(projectDevsRaw)
+
+        const projectUsers = Array.isArray(projectDevsRaw)
           ? projectDevsRaw
           : projectDevsRaw?.data || projectDevsRaw?.users || [];
-        const mappedUsers = users
-          .map((user: any) => ({
-            userId: user.employeeId || user.userId || user.id,
-            userName:
-              user.firstName && user.lastName
-                ? `${user.firstName} ${user.lastName}`.trim()
-                : user.userName || user.name || "Unknown User",
-            empId: user.employeeId || user.userId || user.id,
-          }))
-          .filter(
-            (u: any) =>
-              u.userId &&
-              u.userName &&
-              assignedEmployeeIds.has(Number(u.userId)),
+
+        const allUsers = Array.isArray(allUsersRaw)
+          ? allUsersRaw
+          : allUsersRaw?.data || allUsersRaw?.content || [];
+
+        const sourceList = projectUsers.length > 0 ? projectUsers : allUsers;
+
+        const mappedUsers = sourceList
+          .map((user: any) => {
+            const id = user.employeeId || user.userId || user.id;
+            const firstName = user.firstName || "";
+            const lastName = user.lastName || "";
+            const fullName = (firstName && lastName)
+              ? `${firstName} ${lastName}`.trim()
+              : (user.userName || user.name || user.employeeName || "Developer");
+            const role = user.role || user.roleName || "";
+            return {
+              userId: id,
+              userName: role ? `${fullName} (${role})` : fullName,
+              empId: id,
+            };
+          })
+          .filter((u: any) => u.userId && u.userName);
+
+        if (assignedEmployeeIds.size > 0) {
+          const subModuleFiltered = mappedUsers.filter((u: any) =>
+            assignedEmployeeIds.has(Number(u.userId))
           );
+          if (subModuleFiltered.length > 0) {
+            setAllocatedUsers(subModuleFiltered);
+            return;
+          }
+        }
+
         setAllocatedUsers(mappedUsers);
       })
       .catch((error) => {
         console.error(
-          "Failed to fetch developers allocated to submodule:",
+          "Failed to fetch developers allocated to project/submodule:",
           error,
         );
         setAllocatedUsers([]);
       })
       .finally(() => setIsAllocatedUsersLoading(false));
-  }, [formData.subModuleId, selectedProjectId]);
+  }, [formData.subModuleId, formData.moduleId, selectedProjectId]);
 
   useEffect(() => {
     if (!selectedProjectId) {

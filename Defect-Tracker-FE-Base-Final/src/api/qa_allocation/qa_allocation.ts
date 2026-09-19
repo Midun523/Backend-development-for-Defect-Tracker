@@ -28,7 +28,7 @@ export const assignQAToTestCase = async (releaseId: number, testCaseId: number, 
 
 export const getQAMembersByProjectId = async (projectId: number | string) => {
   const token = localStorage.getItem("authToken");
-  const res = await axios.get(ENDPOINTS.getAllUsers, {
+  const res = await axios.get(ENDPOINTS.employee, {
     params: { size: 1000 },
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   }).catch(() => ({ data: { data: [] } }));

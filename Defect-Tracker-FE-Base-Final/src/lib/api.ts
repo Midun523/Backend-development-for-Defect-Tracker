@@ -62,7 +62,7 @@ import { ENDPOINTS } from '../utils/apiendpoint';
     }
   };
   const apiClient: AxiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_BASE_URL || '/api/v1/',
+    baseURL: import.meta.env.VITE_BASE_URL || 'http://localhost:8087',
     timeout: 1000000, 
   });
   const token = tokenManager.getToken();

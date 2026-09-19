@@ -33,6 +33,10 @@ public class ReleaseTestCase {
     @JoinColumn(name = "assigned_qa_id")
     private Employee assignedQa;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "linked_defect_id")
+    private com.defecttracker.entity.Defect linkedDefect;
+
     @Builder.Default
     @Column(length = 30)
     private String executionStatus = "NOT_RUN"; // PASS, FAIL, BLOCKED, NOT_RUN, HOLD
@@ -45,6 +49,30 @@ public class ReleaseTestCase {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("defectNo")
+    public String getDefectNo() {
+        return linkedDefect != null ? linkedDefect.getDefectId() : null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("assignedTo")
+    public String getAssignedToName() {
+        if (linkedDefect != null && linkedDefect.getAssignedTo() != null) {
+            return linkedDefect.getAssignedTo().getFirstName() + " " + linkedDefect.getAssignedTo().getLastName();
+        }
+        return null;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("priorityName")
+    public String getPriorityName() {
+        if (linkedDefect != null && linkedDefect.getPriority() != null) {
+            return linkedDefect.getPriority().getName();
+        }
+        return null;
+    }
 
     @Transient
     @com.fasterxml.jackson.annotation.JsonProperty("testcaseNo")

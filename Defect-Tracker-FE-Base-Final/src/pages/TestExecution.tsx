@@ -2913,34 +2913,51 @@ const handleDefectFormSubmit = async (e: React.FormEvent) => {
     });
   }
 
-  // ✅ Fetch submodule-allocated developers for the dropdown
-  const subModuleId = testCase.subModuleId; // numeric ID from testCase
-  if (subModuleId && selectedProject) {
+  // ✅ Fetch developers for the dropdown with fallback to project developers
+  const subModuleId = testCase.subModuleId;
+  if (selectedProject) {
     setDefectAllocatedUsersLoading(true);
     try {
       const [subModuleDevRes, projectDevsRaw] = await Promise.all([
-        getAllSubmoduleAllocatedDevBySubmoduleId(Number(subModuleId)).catch(() => ({ data: [] })),
+        subModuleId
+          ? getAllSubmoduleAllocatedDevBySubmoduleId(Number(subModuleId)).catch(() => ({ data: [] }))
+          : Promise.resolve({ data: [] }),
         getDevelopersWithRolesByProjectId(selectedProject).catch(() => []),
       ]);
 
       const assignedEmployeeIds = new Set(
-        (subModuleDevRes?.data || []).map((d: any) => Number(d.employeeId))
+        (subModuleDevRes?.data || []).map((d: any) => Number(d.employeeId || d.id || d.userId))
       );
       const users = Array.isArray(projectDevsRaw)
         ? projectDevsRaw
         : projectDevsRaw?.data || projectDevsRaw?.users || [];
-      const mappedUsers = users
-        .map((user: any) => ({
-          userId: user.employeeId || user.userId || user.id,
-          userName:
-            user.firstName && user.lastName
-              ? `${user.firstName} ${user.lastName}`.trim()
-              : user.userName || user.name || "Unknown User",
-          empId: user.employeeId || user.userId || user.id,
-        }))
-        .filter((u: any) => u.userId && u.userName && assignedEmployeeIds.has(Number(u.userId)));
 
-      setDefectAllocatedUsers(mappedUsers);
+      const mappedUsers = users
+        .map((user: any) => {
+          const id = user.employeeId || user.userId || user.id;
+          const firstName = user.firstName || "";
+          const lastName = user.lastName || "";
+          const fullName = (firstName && lastName)
+            ? `${firstName} ${lastName}`.trim()
+            : (user.userName || user.name || user.employeeName || "Developer");
+          const role = user.role || user.roleName || "";
+          return {
+            userId: id,
+            userName: role ? `${fullName} (${role})` : fullName,
+            empId: id,
+          };
+        })
+        .filter((u: any) => u.userId && u.userName);
+
+      let finalUsers = mappedUsers;
+      if (assignedEmployeeIds.size > 0) {
+        const filtered = mappedUsers.filter((u: any) => assignedEmployeeIds.has(Number(u.userId)));
+        if (filtered.length > 0) {
+          finalUsers = filtered;
+        }
+      }
+
+      setDefectAllocatedUsers(finalUsers);
     } catch (error) {
       console.error("Failed to fetch developers for submodule:", error);
       setDefectAllocatedUsers([]);

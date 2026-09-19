@@ -50,12 +50,16 @@ export interface NextStatusResponse {
   statusCode: number;
 }
 
-export const getAllWorkflows = async (): Promise<GetAllWorkflowsResponse> => {
+export const getAllWorkflows = async (): Promise<any> => {
   const token = localStorage.getItem("authToken");
   const res = await axios.get(ENDPOINTS.workflow, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  return res.data;
+  return {
+    ...res.data,
+    statusMessage: res.data?.statusMessage || res.data?.message || "Success",
+    data: res.data?.data || [],
+  };
 };
 
 export const saveWorkflow = async (workflowData: SaveWorkflowRequest): Promise<SaveWorkflowResponse> => {
@@ -63,16 +67,36 @@ export const saveWorkflow = async (workflowData: SaveWorkflowRequest): Promise<S
   const res = await axios.post(ENDPOINTS.workflow, workflowData, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  return res.data;
+  return {
+    ...res.data,
+    statusMessage: res.data?.statusMessage || res.data?.message || "Workflow saved successfully",
+    data: res.data?.data,
+  };
 };
 
 export const getNextStatuses = async (
   fromStatusId: number
-): Promise<NextStatusResponse> => {
+): Promise<any> => {
   const token = localStorage.getItem("authToken");
   const res = await axios.get(ENDPOINTS.workflowNextStatus(fromStatusId), {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  return res.data;
+  const list = res.data?.data || res.data || [];
+  const normalized = (Array.isArray(list) ? list : []).map((s: any) => {
+    const rawColor = s.color || s.colorCode || "#6B7280";
+    const hex = rawColor.startsWith("#") ? rawColor : `#${rawColor}`;
+    return {
+      ...s,
+      id: s.id,
+      name: s.name || s.statusName || "",
+      color: hex,
+      colorCode: hex,
+    };
+  });
+  return {
+    ...res.data,
+    statusMessage: res.data?.statusMessage || res.data?.message || "Success",
+    data: normalized,
+  };
 };
 

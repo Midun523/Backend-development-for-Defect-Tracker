@@ -50,8 +50,10 @@ public class DefectServiceImpl implements DefectService {
     @Override
     @Transactional
     public Defect createDefect(DefectCreateRequest request) {
-        Project project = projectRepository.findById(request.getProjectId())
-                .orElseThrow(() -> new ResourceNotFoundException("Project", "id", request.getProjectId()));
+        Project project = null;
+        if (request.getProjectId() != null) {
+            project = projectRepository.findById(request.getProjectId()).orElse(null);
+        }
 
         Release release = null;
         if (request.getEffectiveReleaseId() != null) {
@@ -66,6 +68,24 @@ public class DefectServiceImpl implements DefectService {
         SubModule subModule = null;
         if (request.getSubModuleId() != null) {
             subModule = subModuleRepository.findById(request.getSubModuleId()).orElse(null);
+        }
+
+        if (module == null && subModule != null && subModule.getModule() != null) {
+            module = subModule.getModule();
+        }
+
+        if (project == null) {
+            if (release != null && release.getProject() != null) {
+                project = release.getProject();
+            } else if (subModule != null && subModule.getModule() != null && subModule.getModule().getProject() != null) {
+                project = subModule.getModule().getProject();
+            } else if (module != null && module.getProject() != null) {
+                project = module.getProject();
+            } else {
+                project = projectRepository.findAll().stream().findFirst().orElseThrow(
+                        () -> new ResourceNotFoundException("Project", "id", request.getProjectId())
+                );
+            }
         }
 
         TestCase testCase = null;
@@ -88,25 +108,30 @@ public class DefectServiceImpl implements DefectService {
         }
 
         StatusType status = null;
-        if (request.getDefectStatusId() != null) {
-            status = statusTypeRepository.findById(request.getDefectStatusId()).orElse(null);
+        if (request.getEffectiveStatusId() != null) {
+            status = statusTypeRepository.findById(request.getEffectiveStatusId()).orElse(null);
         } else {
             status = statusTypeRepository.findByName("New").orElseGet(() -> statusTypeRepository.findAll().stream().findFirst().orElse(null));
         }
 
         DefectType defectType = null;
-        if (request.getTypeId() != null) {
-            defectType = defectTypeRepository.findById(request.getTypeId()).orElse(null);
+        Long effectiveTypeId = request.getEffectiveTypeId();
+        if (effectiveTypeId != null) {
+            defectType = defectTypeRepository.findById(effectiveTypeId).orElse(null);
         }
 
         Employee assignedTo = null;
         if (request.getEffectiveAssignedToId() != null) {
-            assignedTo = employeeRepository.findById(request.getEffectiveAssignedToId()).orElse(null);
+            Long empId = request.getEffectiveAssignedToId();
+            assignedTo = employeeRepository.findById(empId)
+                    .orElseGet(() -> employeeRepository.findByUserId(empId).orElse(null));
         }
 
         Employee assignedBy = null;
         if (request.getEffectiveAssignedById() != null) {
-            assignedBy = employeeRepository.findById(request.getEffectiveAssignedById()).orElse(null);
+            Long empId = request.getEffectiveAssignedById();
+            assignedBy = employeeRepository.findById(empId)
+                    .orElseGet(() -> employeeRepository.findByUserId(empId).orElse(null));
         }
 
         long count = defectRepository.count() + 1;
@@ -116,7 +141,7 @@ public class DefectServiceImpl implements DefectService {
                 .defectId(defectId)
                 .title(request.getEffectiveTitle())
                 .description(request.getDescription())
-                .steps(request.getSteps())
+                .steps(request.getEffectiveSteps())
                 .priority(priority)
                 .severity(severity)
                 .defectStatus(status)
@@ -127,6 +152,7 @@ public class DefectServiceImpl implements DefectService {
                 .subModule(subModule)
                 .testCase(testCase)
                 .reOpenCount(request.getReOpenCount() != null ? request.getReOpenCount() : 0)
+                .testCaseRequired(request.getEffectiveTestCaseRequired() != null ? request.getEffectiveTestCaseRequired() : false)
                 .attachment(request.getAttachment())
                 .assignedTo(assignedTo)
                 .assignedBy(assignedBy)
@@ -134,6 +160,28 @@ public class DefectServiceImpl implements DefectService {
                 .build();
 
         Defect saved = defectRepository.save(defect);
+
+        // Auto-create TestCase if testCaseRequired is true
+        Boolean tcRequired = request.getEffectiveTestCaseRequired();
+        if (Boolean.TRUE.equals(tcRequired) && subModule != null) {
+            long tcCount = testCaseRepository.count() + 1;
+            String tcNo = String.format("TC%03d", tcCount);
+            TestCase autoTestCase = TestCase.builder()
+                    .testcaseNo(tcNo)
+                    .description(request.getDescription() != null ? request.getDescription() : saved.getTitle())
+                    .detailsSteps(request.getEffectiveSteps())
+                    .expectedResult("")
+                    .subModule(subModule)
+                    .severity(severity)
+                    .defectType(defectType)
+                    .executionStatus("NOT_RUN")
+                    .createdBy(saved.getReportedBy())
+                    .build();
+            TestCase savedTc = testCaseRepository.save(autoTestCase);
+            saved.setTestCase(savedTc);
+            saved = defectRepository.save(saved);
+            log.info("Auto-created TestCase {} for Defect {}", savedTc.getTestcaseNo(), saved.getDefectId());
+        }
 
         // Initial history entry
         DefectHistory history = DefectHistory.builder()

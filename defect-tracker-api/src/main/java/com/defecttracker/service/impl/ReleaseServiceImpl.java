@@ -27,6 +27,9 @@ public class ReleaseServiceImpl implements ReleaseService {
     private final ReleaseTestCaseRepository releaseTestCaseRepository;
     private final EmployeeRepository employeeRepository;
     private final TestCaseAllocationLogRepository testCaseAllocationLogRepository;
+    private final DefectRepository defectRepository;
+    private final PriorityRepository priorityRepository;
+    private final StatusTypeRepository statusTypeRepository;
 
     @Override
     @Transactional
@@ -208,12 +211,69 @@ public class ReleaseServiceImpl implements ReleaseService {
     @Override
     @Transactional
     public ReleaseTestCase updateReleaseTestCaseStatus(Long releaseId, Long testCaseId, String status, String comment) {
+        return updateReleaseTestCaseStatus(releaseId, testCaseId, status, comment, null, null);
+    }
+
+    @Override
+    @Transactional
+    public ReleaseTestCase updateReleaseTestCaseStatus(Long releaseId, Long testCaseId, String status, String comment, Long priorityId, Long assignedToId) {
         ReleaseTestCase rtc = releaseTestCaseRepository.findByReleaseIdAndTestCaseId(releaseId, testCaseId)
                 .orElseThrow(() -> new ResourceNotFoundException("ReleaseTestCase not found"));
 
         rtc.setExecutionStatus(status.toUpperCase());
         rtc.setExecutionComment(comment);
         rtc.setExecutedAt(LocalDateTime.now());
+
+        // Auto-create defect when test case is FAILED
+        if ("FAIL".equalsIgnoreCase(status) || "FAILED".equalsIgnoreCase(status)) {
+            TestCase tc = rtc.getTestCase();
+            Release release = rtc.getRelease();
+
+            if (tc != null && release != null && release.getProject() != null) {
+                Priority priority = null;
+                if (priorityId != null) {
+                    priority = priorityRepository.findById(priorityId).orElse(null);
+                }
+                if (priority == null) {
+                    priority = priorityRepository.findByName("Medium").orElse(null);
+                }
+
+                Employee assignedTo = null;
+                if (assignedToId != null) {
+                    assignedTo = employeeRepository.findById(assignedToId).orElse(null);
+                }
+
+                StatusType newStatus = statusTypeRepository.findByName("New")
+                        .orElseGet(() -> statusTypeRepository.findAll().stream().findFirst().orElse(null));
+
+                long count = defectRepository.count() + 1;
+                String defectId = String.format("DEF%03d", count);
+
+                Defect defect = Defect.builder()
+                        .defectId(defectId)
+                        .title(tc.getDescription())
+                        .description(tc.getDescription())
+                        .steps(tc.getDetailsSteps())
+                        .priority(priority)
+                        .severity(tc.getSeverity())
+                        .defectStatus(newStatus)
+                        .defectType(tc.getDefectType())
+                        .project(release.getProject())
+                        .release(release)
+                        .module(tc.getSubModule() != null ? tc.getSubModule().getModule() : null)
+                        .subModule(tc.getSubModule())
+                        .testCase(tc)
+                        .assignedTo(assignedTo)
+                        .reportedBy(rtc.getAssignedQa() != null
+                                ? rtc.getAssignedQa().getFirstName() + " " + rtc.getAssignedQa().getLastName()
+                                : "QA")
+                        .build();
+
+                Defect savedDefect = defectRepository.save(defect);
+                rtc.setLinkedDefect(savedDefect);
+            }
+        }
+
         return releaseTestCaseRepository.save(rtc);
     }
 

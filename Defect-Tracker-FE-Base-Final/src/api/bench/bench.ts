@@ -57,7 +57,7 @@ export const getBenchEmployees = async () => {
   } catch (error) {
     console.error("Failed to fetch bench employees, falling back to users:", error);
     try {
-      const res = await axios.get(ENDPOINTS.getAllUsers, {
+      const res = await axios.get(ENDPOINTS.employee, {
         params: { size: 1000 },
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -86,7 +86,7 @@ export const getEmployeeProjectHistory = async (employeeId: string | number) => 
 export const getEmployeeDetails = async (employeeId: string | number) => {
   const token = localStorage.getItem("authToken");
   const res = await axios
-    .get(ENDPOINTS.getUserById(Number(employeeId)), {
+    .get(ENDPOINTS.employeeById(Number(employeeId)), {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
     .catch(() => ({ data: { data: null } }));

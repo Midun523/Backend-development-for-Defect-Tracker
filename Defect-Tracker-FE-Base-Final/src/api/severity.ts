@@ -34,39 +34,98 @@ export interface GetSeveritiesResponse {
 }
 
 export const createSeverity = async (data: CreateSeverityRequest): Promise<CreateSeverityResponse> => {
-  const res = await axios.post(ENDPOINTS.severity, data);
+  const token = localStorage.getItem("authToken");
+  const payload = {
+    ...data,
+    color: data.color?.startsWith("#") ? data.color : `#${data.color || "EF4444"}`,
+    colorCode: data.color?.startsWith("#") ? data.color : `#${data.color || "EF4444"}`,
+  };
+  const res = await axios.post(ENDPOINTS.severity, payload, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
   return res.data;
 };
 
 export const updateSeverity = async (id: number, data: Partial<CreateSeverityRequest>): Promise<CreateSeverityResponse> => {
-  const res = await axios.put(ENDPOINTS.severityById(id), data);
+  const token = localStorage.getItem("authToken");
+  const payload = {
+    ...data,
+    ...(data.color ? {
+      color: data.color.startsWith("#") ? data.color : `#${data.color}`,
+      colorCode: data.color.startsWith("#") ? data.color : `#${data.color}`,
+    } : {}),
+  };
+  const res = await axios.put(ENDPOINTS.severityById(id), payload, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
   return res.data;
 };
 
 export const getSeverities = async (
   page: number = 0,
   pageSize: number = 100
-): Promise<GetSeveritiesResponse> => {
-  const res = await axios.get(ENDPOINTS.severityPagination(page, pageSize));
-  // The UI expects res.data.content to be the array of severities.
-  // The backend ApiResponse has the paginated object in res.data.data
-  // So res.data is the ApiResponse. We need to ensure res.data.content exists.
+): Promise<any> => {
+  const token = localStorage.getItem("authToken");
+  const res = await axios.get(ENDPOINTS.severityPagination(page, pageSize), {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
   const apiResponse = res.data;
-  if (apiResponse && apiResponse.data) {
-    const paginatedData = apiResponse.data;
-    if (paginatedData.content) {
-       // Attach content directly to the data object returned so res.data.content works
-       apiResponse.content = paginatedData.content;
-    } else if (Array.isArray(paginatedData)) {
-       apiResponse.content = paginatedData;
-    }
-  } else if (Array.isArray(apiResponse)) {
-     return { data: { content: apiResponse } } as any;
+  const rawData = apiResponse?.data ?? apiResponse;
+  let rawList: any[] = [];
+  let totalPages = 1;
+  let totalElements = 0;
+
+  if (rawData && Array.isArray(rawData.content)) {
+    rawList = rawData.content;
+    totalPages = rawData.totalPages ?? 1;
+    totalElements = rawData.totalElements ?? rawList.length;
+  } else if (Array.isArray(rawData)) {
+    rawList = rawData;
+    totalElements = rawList.length;
+    totalPages = pageSize ? Math.ceil(totalElements / pageSize) : 1;
   }
-  return apiResponse;
+
+  const normalized = rawList.map((s: any) => {
+    const rawColor = s.color || s.colorCode || "#EF4444";
+    const hex = rawColor.startsWith("#") ? rawColor : `#${rawColor}`;
+    return {
+      ...s,
+      id: s.id,
+      name: s.name || s.severityName || "",
+      severityName: s.name || s.severityName || "",
+      color: hex,
+      colorCode: hex,
+      weight: s.weight ?? 1,
+    };
+  });
+
+  const dataPayload: any = {
+    content: normalized,
+    totalElements,
+    totalPages,
+    size: pageSize,
+    number: page,
+    pageNumber: page,
+    pageSize,
+  };
+
+  return {
+    ...apiResponse,
+    status: apiResponse?.status || "success",
+    message: apiResponse?.message || "Severities retrieved",
+    statusMessage: apiResponse?.message || "Severities retrieved",
+    content: normalized,
+    data: dataPayload,
+  };
 };
 
+export const getAllSeverities = getSeverities;
+
 export const deleteSeverity = async (id: number) => {
-  const res = await axios.delete(ENDPOINTS.severityById(id));
+  const token = localStorage.getItem("authToken");
+  const res = await axios.delete(ENDPOINTS.severityById(id), {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
   return res.data;
 };
