@@ -26,4 +26,5 @@ public class LoginResponse {
     private List<String> roles;
     private List<String> globalPermissions;
     private List<String> projectAccessList;
+    private Boolean mustChangePassword;
 }

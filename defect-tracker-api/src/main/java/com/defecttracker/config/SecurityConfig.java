@@ -29,6 +29,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final org.springframework.core.env.Environment env;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -50,25 +51,31 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        boolean isDev = java.util.Arrays.asList(env.getActiveProfiles()).contains("dev");
+
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers(
-                                "/api/v1/auth/**",
-                                "/api/v1/whatsapp/webhook",
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(
+                            "/api/v1/auth/**",
+                            "/api/v1/whatsapp/webhook",
+                            "/error"
+                    ).permitAll();
+
+                    if (isDev) {
+                        auth.requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/error"
-                        ).permitAll()
-                        // All other API endpoints require authentication
-                        .anyRequest().authenticated()
-                );
+                                "/swagger-ui.html"
+                        ).permitAll();
+                    }
+
+                    auth.anyRequest().authenticated();
+                });
 
         return http.build();
     }

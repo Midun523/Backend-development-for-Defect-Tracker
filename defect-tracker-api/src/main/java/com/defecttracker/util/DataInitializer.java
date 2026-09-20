@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
+import jakarta.annotation.PostConstruct;
 
 @Slf4j
 @Component
@@ -45,8 +46,23 @@ public class DataInitializer implements CommandLineRunner {
     private String adminEmail;
     @Value("${app.seed.admin.username:US0001}")
     private String adminUsername;
-    @Value("${app.seed.admin.password:admin123}")
+    @Value("${app.seed.admin.password}")
     private String adminPassword;
+
+    private static final Set<String> WEAK_PASSWORDS = Set.of(
+            "admin123", "password", "123456", "12345678", "123456789",
+            "admin", "administrator", "root", "toor", "qwerty", "admin@123", "password123"
+    );
+
+    @PostConstruct
+    public void validateAdminPassword() {
+        if (adminPassword == null || adminPassword.length() < 12) {
+            throw new IllegalArgumentException("SEED_ADMIN_PASSWORD must be at least 12 characters long");
+        }
+        if (WEAK_PASSWORDS.contains(adminPassword.trim().toLowerCase())) {
+            throw new IllegalArgumentException("SEED_ADMIN_PASSWORD cannot be a known weak value: " + adminPassword);
+        }
+    }
 
     @Override
     @Transactional
@@ -176,6 +192,7 @@ public class DataInitializer implements CommandLineRunner {
                 .userType("CompanyStaff")
                 .designation(pmDesignation)
                 .roles(Set.of(superAdminRole))
+                .mustChangePassword(true)
                 .build();
         User savedAdmin = userRepository.save(adminUser);
 
@@ -197,7 +214,7 @@ public class DataInitializer implements CommandLineRunner {
                 .build();
         employeeRepository.save(adminEmp);
 
-        log.info("Initialized Super Admin: {} / {}", adminEmail, adminPassword);
+        log.info("Initialized Super Admin: {}", adminEmail);
     }
 
     private void seedEmailConfigAndTemplates() {

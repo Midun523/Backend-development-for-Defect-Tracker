@@ -16,20 +16,45 @@ Create the database in PostgreSQL:
 CREATE DATABASE defect_tracker_db;
 ```
 
-*(Optional)* If your PostgreSQL username/password is different from `postgres`/`postgres`, update `src/main/resources/application.properties` or set environment variables:
+### 2. Configuration & Environment Variables
+
+> [!IMPORTANT]
+> Spring Boot does **NOT** read `.env` files. Secrets must be passed as environment variables or provided via a local properties file.
+
+The application requires the following environment variables:
+- `DB_PASSWORD`: PostgreSQL database password (no default).
+- `JWT_SECRET`: Hex or string secret for signing JWTs (must be at least 32 bytes / 256 bits).
+- `SEED_ADMIN_PASSWORD`: Password for the initial seeded admin account (must be at least 12 characters long and not a known weak password).
+- `DB_URL` *(Optional)*: JDBC URL (default: `jdbc:postgresql://localhost:5432/defect_tracker_db`).
+- `DB_USERNAME` *(Optional)*: Database username (default: `postgres`).
+
+You can run locally in one of two ways:
+
+#### Option A: Set Environment Variables in Shell
+```powershell
+$env:DB_PASSWORD = "your_postgres_password"
+$env:JWT_SECRET = "9a4f2c8d3e7b1a5f6e8d2c4b7a9f1e3c5d7b9a2f4e6d8c1b3a5f7e9d2c4b6a8f"
+$env:SEED_ADMIN_PASSWORD = "SuperSecurePassword2026!"
+./gradlew bootRun
+```
+
+#### Option B: Use a git-ignored `application-local.properties`
+Create `src/main/resources/application-local.properties` (ignored by git):
 ```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/defect_tracker_db
-spring.datasource.username=postgres
-spring.datasource.password=your_password
+spring.datasource.password=your_postgres_password
+app.jwt.secret=9a4f2c8d3e7b1a5f6e8d2c4b7a9f1e3c5d7b9a2f4e6d8c1b3a5f7e9d2c4b6a8f
+app.seed.admin.password=SuperSecurePassword2026!
+```
+And run with the `local` profile:
+```powershell
+./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
 ### 3. Run the Backend API
 In this folder (`defect-tracker-api`), run:
 ```powershell
-.\mvnw.cmd spring-boot:run
+./gradlew bootRun
 ```
-*(On Linux/macOS: `./mvnw spring-boot:run`)*
-
 The server will start on port **`8087`** (matches frontend `.env` config `VITE_BASE_URL=http://localhost:8087`).
 
 ---
@@ -40,7 +65,7 @@ When the application boots with an empty database, it automatically seeds:
 - **Super Admin Account**:
   - **Email**: `admin@defecttracker.com`
   - **Username / User ID**: `US0001`
-  - **Password**: `admin123`
+  - **Password**: Configured at startup via `SEED_ADMIN_PASSWORD` (forced password change on first login)
   - **Role**: `Super Admin` (assigned `ALL_PERMISSIONS`)
 - **Master Data**:
   - **67 System Permissions**
@@ -132,7 +157,29 @@ Once running, access Swagger UI in your browser:
 
 ## 🧪 Testing the Build
 
-To run the automated tests:
+Tests run against a dedicated local PostgreSQL database (default `defect_tracker_test`).
+
+### Test Database Setup
+1. Create the test database in PostgreSQL:
+   ```sql
+   CREATE DATABASE defect_tracker_test;
+   ```
+2. Set the `TEST_DB_PASSWORD` environment variable (required — fail-fast if unset):
+   ```powershell
+   $env:TEST_DB_PASSWORD = "your_postgres_password"
+   ```
+   *(Optional)* If using a custom URL or username:
+   ```powershell
+   $env:TEST_DB_URL = "jdbc:postgresql://localhost:5432/defect_tracker_test"
+   $env:TEST_DB_USERNAME = "postgres"
+   ```
+
+### Running Tests
+To run the automated tests using Gradle:
 ```powershell
-.\mvnw.cmd test
+./gradlew test
+```
+Or for a clean test run:
+```powershell
+./gradlew clean test
 ```

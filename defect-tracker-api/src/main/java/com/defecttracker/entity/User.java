@@ -51,6 +51,10 @@ public class User {
     @Column(nullable = false, length = 50)
     private String userType = "CompanyStaff"; // CompanyStaff, Client
 
+    @Builder.Default
+    @Column(name = "must_change_password", nullable = false)
+    private Boolean mustChangePassword = false;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "designation_id")
     private Designation designation;

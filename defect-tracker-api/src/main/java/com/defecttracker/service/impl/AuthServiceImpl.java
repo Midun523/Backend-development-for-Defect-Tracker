@@ -55,6 +55,10 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmailOrUserId(identifier, identifier)
                 .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
 
+        if (!"ACTIVE".equalsIgnoreCase(user.getUserStatus())) {
+            throw new UnauthorizedException("Invalid username or password");
+        }
+
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getEmail(), request.getPassword())
@@ -91,6 +95,7 @@ public class AuthServiceImpl implements AuthService {
                 .roles(roles)
                 .globalPermissions(permissions)
                 .projectAccessList(projectIds)
+                .mustChangePassword(Boolean.TRUE.equals(user.getMustChangePassword()))
                 .build();
     }
 
@@ -152,7 +157,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
 
         String resetToken = tokenProvider.generateRefreshToken(user.getEmail());
-        log.info("Generated password reset token for {}: {}", user.getEmail(), resetToken);
+        log.info("Credential reset requested for user: {}", user.getEmail());
 
         Map<String, String> vars = new HashMap<>();
         vars.put("name", user.getFirstName());

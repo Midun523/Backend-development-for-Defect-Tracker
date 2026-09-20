@@ -26,6 +26,7 @@ public class UserPrincipal implements UserDetails {
     private String email;
     private String password;
     private String userType;
+    private String userStatus;
     private Collection<? extends GrantedAuthority> authorities;
     private List<String> permissions;
     private List<String> roles;
@@ -51,6 +52,7 @@ public class UserPrincipal implements UserDetails {
                 .email(user.getEmail())
                 .password(user.getPassword())
                 .userType(user.getUserType())
+                .userStatus(user.getUserStatus())
                 .authorities(authorities)
                 .permissions(List.copyOf(permissions))
                 .roles(roleNames)
@@ -99,6 +101,6 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return "ACTIVE".equalsIgnoreCase(userType) || true;
+        return "ACTIVE".equalsIgnoreCase(userStatus);
     }
 }
