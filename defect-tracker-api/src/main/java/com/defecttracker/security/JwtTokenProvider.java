@@ -98,16 +98,29 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
-    public boolean validateToken(String authToken) {
+    public enum JwtValidationResult {
+        VALID,
+        EXPIRED,
+        INVALID
+    }
+
+    public JwtValidationResult validateTokenDetailed(String authToken) {
         try {
             Jwts.parser()
                     .verifyWith(secretKey)
                     .build()
                     .parseSignedClaims(authToken);
-            return true;
+            return JwtValidationResult.VALID;
+        } catch (ExpiredJwtException ex) {
+            log.debug("JWT validation failed: expired");
+            return JwtValidationResult.EXPIRED;
         } catch (io.jsonwebtoken.JwtException | IllegalArgumentException ex) {
-            log.debug("JWT validation failed");
+            log.debug("JWT validation failed: invalid");
+            return JwtValidationResult.INVALID;
         }
-        return false;
+    }
+
+    public boolean validateToken(String authToken) {
+        return validateTokenDetailed(authToken) == JwtValidationResult.VALID;
     }
 }

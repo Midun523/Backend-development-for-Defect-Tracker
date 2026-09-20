@@ -43,7 +43,6 @@ class CharacterizationTests extends AbstractIntegrationTest {
     private PasswordEncoder passwordEncoder;
 
     @Test
-    @Disabled("R2")
     @DisplayName("FR_AUTH_04: Calling an endpoint with an expired or garbage token must return HTTP 401 Unauthorized")
     void FR_AUTH_04_expiredOrGarbageTokenIs401() throws Exception {
         mockMvc.perform(get("/api/v1/employee")
@@ -52,7 +51,6 @@ class CharacterizationTests extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("R2")
     @DisplayName("FR_ORG_06: Authenticated user without required permission must receive HTTP 403 Forbidden")
     void FR_ORG_06_authenticatedUserWithoutPermissionIs403() throws Exception {
         // Create role with no permissions
