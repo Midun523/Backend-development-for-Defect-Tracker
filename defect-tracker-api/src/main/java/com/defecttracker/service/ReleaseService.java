@@ -23,6 +23,7 @@ public interface ReleaseService {
     List<ReleaseTestCase> getReleaseTestCases(Long releaseId);
     ReleaseTestCase getReleaseTestCase(Long releaseId, Long testCaseId);
     ReleaseTestCase assignQaToReleaseTestCase(Long releaseId, Long testCaseId, Long employeeId);
+    void updateReleaseTestCaseEmployee(Long releaseId, Long employeeId, Map<String, Object> body);
     ReleaseTestCase updateReleaseTestCaseStatus(Long releaseId, Long testCaseId, String status, String comment);
     ReleaseTestCase updateReleaseTestCaseStatus(Long releaseId, Long testCaseId, String status, String comment, Long priorityId, Long assignedToId);
     List<TestCaseAllocationLog> getTestCaseAllocationLogs();

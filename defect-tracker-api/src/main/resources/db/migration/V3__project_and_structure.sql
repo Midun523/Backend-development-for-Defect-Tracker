@@ -1,97 +1,77 @@
 -- ==============================================================================
--- Flyway Migration V3: Clients, Projects, Modules, SubModules, and Developer Assignments
+-- Flyway Migration V3: Client Details, Projects, Modules, SubModules, and Allocations
 -- ==============================================================================
 
--- 1. Clients (one per project)
-CREATE TABLE IF NOT EXISTS clients (
+-- 1. Client Details
+CREATE TABLE IF NOT EXISTS client_details (
     id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(150) NOT NULL UNIQUE,
+    client_name VARCHAR(150) NOT NULL,
+    phone_number VARCHAR(30),
     email VARCHAR(150),
-    phone VARCHAR(50),
-    address VARCHAR(255),
-    contact_person VARCHAR(100),
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100)
+    country VARCHAR(100),
+    state VARCHAR(100),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 2. Projects
 CREATE TABLE IF NOT EXISTS projects (
     id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(150) NOT NULL UNIQUE,
-    description TEXT,
-    status VARCHAR(50) DEFAULT 'ACTIVE' NOT NULL, -- ACTIVE, COMPLETED, ON_HOLD
+    project_id VARCHAR(50) UNIQUE,
+    name VARCHAR(150) NOT NULL,
+    prefix VARCHAR(20),
+    project_type VARCHAR(50),
+    status VARCHAR(30) DEFAULT 'ACTIVE' NOT NULL,
     start_date DATE,
     end_date DATE,
-    client_id BIGINT UNIQUE REFERENCES clients(id) ON DELETE SET NULL,
-    project_manager_id BIGINT REFERENCES employees(id) ON DELETE SET NULL,
-    kloc NUMERIC(10, 2) DEFAULT 0.00 NOT NULL, -- Kilo lines of code
-    source_control_url VARCHAR(255),
-    is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100)
+    manager_id BIGINT REFERENCES employees(id) ON DELETE SET NULL,
+    client_id BIGINT REFERENCES client_details(id) ON DELETE SET NULL,
+    client_name VARCHAR(150),
+    client_country VARCHAR(100),
+    client_state VARCHAR(100),
+    client_email VARCHAR(150),
+    client_phone VARCHAR(30),
+    address VARCHAR(500),
+    description VARCHAR(2000),
+    progress DOUBLE PRECISION DEFAULT 0.0,
+    kloc DOUBLE PRECISION DEFAULT 0.0,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Project Modules
-CREATE TABLE IF NOT EXISTS project_modules (
+-- 3. Modules
+CREATE TABLE IF NOT EXISTS modules (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
-    description VARCHAR(255),
+    description VARCHAR(1000),
     project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    module_leader_id BIGINT REFERENCES employees(id) ON DELETE SET NULL,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100),
-    CONSTRAINT uk_project_module_name UNIQUE (project_id, name)
+    leader_id BIGINT REFERENCES employees(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 4. SubModules
-CREATE TABLE IF NOT EXISTS submodules (
+CREATE TABLE IF NOT EXISTS sub_modules (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
-    description VARCHAR(255),
-    module_id BIGINT NOT NULL REFERENCES project_modules(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100),
-    CONSTRAINT uk_module_submodule_name UNIQUE (module_id, name)
+    description VARCHAR(1000),
+    module_id BIGINT NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5. SubModule Developer Assignments (one or more developers per submodule)
-CREATE TABLE IF NOT EXISTS submodule_developer_assignments (
+-- 5. Module Leader Allocations
+CREATE TABLE IF NOT EXISTS module_leader_allocations (
     id BIGSERIAL PRIMARY KEY,
-    submodule_id BIGINT NOT NULL REFERENCES submodules(id) ON DELETE CASCADE,
+    module_id BIGINT NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
     employee_id BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100),
-    CONSTRAINT uk_submodule_dev UNIQUE (submodule_id, employee_id)
+    allocated_date TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- ==============================================================================
--- Seed Sample Client & Project
--- ==============================================================================
-
-INSERT INTO clients (name, email, phone, contact_person) VALUES
-('Acme Corporation', 'client@acmecorp.com', '+1-555-0199', 'Jane Doe')
-ON CONFLICT (name) DO NOTHING;
-
-INSERT INTO projects (name, description, status, start_date, client_id, project_manager_id, kloc, is_active)
-SELECT 
-    'Defect Tracker Platform',
-    'Enterprise Defect and QA Management System',
-    'ACTIVE',
-    CURRENT_DATE,
-    c.id,
-    e.id,
-    150.00,
-    TRUE
-FROM clients c, employees e
-WHERE c.name = 'Acme Corporation' AND e.email = 'admin@defecttracker.com'
-ON CONFLICT (name) DO NOTHING;
+-- 6. SubModule Developer Allocations
+CREATE TABLE IF NOT EXISTS sub_module_dev_allocations (
+    id BIGSERIAL PRIMARY KEY,
+    sub_module_id BIGINT NOT NULL REFERENCES sub_modules(id) ON DELETE CASCADE,
+    employee_id BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    assigned_date TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

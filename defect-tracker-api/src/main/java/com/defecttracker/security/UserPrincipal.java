@@ -57,43 +57,6 @@ public class UserPrincipal implements UserDetails {
                 .build();
     }
 
-    public static UserPrincipal create(com.defecttracker.modules.access.entity.Employee employee, List<com.defecttracker.modules.access.entity.EmployeePermissionOverride> overrides) {
-        Set<String> permissionCodes = new HashSet<>();
-        if (employee.getRole() != null && employee.getRole().getPermissions() != null) {
-            for (com.defecttracker.modules.access.entity.Permission p : employee.getRole().getPermissions()) {
-                permissionCodes.add(p.getCode());
-            }
-        }
-        if (overrides != null) {
-            for (com.defecttracker.modules.access.entity.EmployeePermissionOverride override : overrides) {
-                if (override.getOverrideType() == com.defecttracker.modules.access.entity.OverrideType.GRANT) {
-                    permissionCodes.add(override.getPermission().getCode());
-                } else if (override.getOverrideType() == com.defecttracker.modules.access.entity.OverrideType.REVOKE) {
-                    permissionCodes.remove(override.getPermission().getCode());
-                }
-            }
-        }
-        List<GrantedAuthority> authorities = permissionCodes.stream()
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-        if (employee.getRole() != null) {
-            authorities.add(new SimpleGrantedAuthority(employee.getRole().getName()));
-        }
-
-        return UserPrincipal.builder()
-                .id(employee.getId())
-                .userId(employee.getEmployeeId())
-                .firstName(employee.getFirstName())
-                .lastName(employee.getLastName())
-                .email(employee.getEmail())
-                .password(employee.getPassword())
-                .userType(employee.getRole() != null && employee.getRole().isAdmin() ? "ADMIN" : "USER")
-                .authorities(authorities)
-                .permissions(List.copyOf(permissionCodes))
-                .roles(employee.getRole() != null ? List.of(employee.getRole().getName()) : List.of())
-                .build();
-    }
-
     public String getEmployeeId() {
         return userId;
     }

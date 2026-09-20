@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class ModuleController {
     private final SubModuleService subModuleService;
 
     @PostMapping("/project/{projectId}/module")
+    @PreAuthorize("@access.hasProjectAccess('MODULE_CREATE', #projectId)")
     @Operation(summary = "Create module for a project")
     public ResponseEntity<ApiResponse<Module>> createModule(
             @PathVariable Long projectId,
@@ -40,6 +42,7 @@ public class ModuleController {
     }
 
     @PostMapping("/module")
+    @PreAuthorize("@access.has('MODULE_CREATE')")
     @Operation(summary = "Create module with body projectId")
     public ResponseEntity<ApiResponse<Module>> createModuleWithoutPath(
             @Valid @RequestBody ModuleCreateRequest request
@@ -53,6 +56,7 @@ public class ModuleController {
     }
 
     @GetMapping("/project/{projectId}/module")
+    @PreAuthorize("@access.hasProjectAccess('MODULE_READ', #projectId)")
     @Operation(summary = "Get all modules for a project")
     public ResponseEntity<ApiResponse<List<Module>>> getModulesByProject(@PathVariable Long projectId) {
         List<Module> list = moduleService.getModulesByProjectId(projectId);
@@ -60,6 +64,7 @@ public class ModuleController {
     }
 
     @GetMapping("/project/{projectId}/module/{id}")
+    @PreAuthorize("@access.hasProjectAccess('MODULE_READ', #projectId)")
     @Operation(summary = "Get module by ID")
     public ResponseEntity<ApiResponse<Module>> getModuleById(
             @PathVariable Long projectId,
@@ -70,6 +75,7 @@ public class ModuleController {
     }
 
     @PutMapping("/project/{projectId}/module/{id}")
+    @PreAuthorize("@access.hasProjectAccess('MODULE_UPDATE', #projectId)")
     @Operation(summary = "Update module")
     public ResponseEntity<ApiResponse<Module>> updateModule(
             @PathVariable Long projectId,
@@ -81,6 +87,7 @@ public class ModuleController {
     }
 
     @DeleteMapping("/project/{projectId}/module/{id}")
+    @PreAuthorize("@access.hasProjectAccess('MODULE_DELETE', #projectId)")
     @Operation(summary = "Delete module")
     public ResponseEntity<ApiResponse<Void>> deleteModule(
             @PathVariable Long projectId,
@@ -91,6 +98,7 @@ public class ModuleController {
     }
 
     @PostMapping("/module/{moduleId}/sub-module")
+    @PreAuthorize("@access.hasModuleAccess('MODULE_CREATE', #moduleId)")
     @Operation(summary = "Create submodule")
     public ResponseEntity<ApiResponse<SubModule>> createSubModule(
             @PathVariable Long moduleId,
@@ -100,7 +108,8 @@ public class ModuleController {
         return ResponseEntity.ok(ApiResponse.created(subModule, "Submodule created successfully"));
     }
 
-    @PostMapping({"/sub-module", "/submodule"})
+    @PostMapping("/sub-module")
+    @PreAuthorize("@access.has('MODULE_CREATE')")
     @Operation(summary = "Create submodule with body moduleId")
     public ResponseEntity<ApiResponse<SubModule>> createSubModuleWithoutPath(
             @Valid @RequestBody SubModuleCreateRequest request
@@ -114,6 +123,7 @@ public class ModuleController {
     }
 
     @GetMapping("/module/{moduleId}/sub-module")
+    @PreAuthorize("@access.hasModuleAccess('MODULE_READ', #moduleId)")
     @Operation(summary = "Get submodules for a module")
     public ResponseEntity<ApiResponse<List<SubModule>>> getSubModulesByModule(@PathVariable Long moduleId) {
         List<SubModule> list = subModuleService.getSubModulesByModuleId(moduleId);
@@ -121,6 +131,7 @@ public class ModuleController {
     }
 
     @GetMapping("/module/{moduleId}/sub-module/{id}")
+    @PreAuthorize("@access.hasModuleAccess('MODULE_READ', #moduleId)")
     @Operation(summary = "Get submodule by ID")
     public ResponseEntity<ApiResponse<SubModule>> getSubModuleById(
             @PathVariable Long moduleId,
@@ -131,6 +142,7 @@ public class ModuleController {
     }
 
     @PutMapping("/module/{moduleId}/sub-module/{id}")
+    @PreAuthorize("@access.hasModuleAccess('MODULE_UPDATE', #moduleId)")
     @Operation(summary = "Update submodule")
     public ResponseEntity<ApiResponse<SubModule>> updateSubModule(
             @PathVariable Long moduleId,
@@ -142,6 +154,7 @@ public class ModuleController {
     }
 
     @DeleteMapping("/module/{moduleId}/sub-module/{id}")
+    @PreAuthorize("@access.hasModuleAccess('MODULE_DELETE', #moduleId)")
     @Operation(summary = "Delete submodule")
     public ResponseEntity<ApiResponse<Void>> deleteSubModule(
             @PathVariable Long moduleId,
@@ -151,7 +164,8 @@ public class ModuleController {
         return ResponseEntity.ok(ApiResponse.success(null, "Submodule deleted"));
     }
 
-    @DeleteMapping({"/sub-module/{id}", "/submodule/{id}"})
+    @DeleteMapping("/sub-module/{id}")
+    @PreAuthorize("@access.hasSubModuleAccess('MODULE_DELETE', #id)")
     @Operation(summary = "Delete submodule by ID directly")
     public ResponseEntity<ApiResponse<Void>> deleteSubModuleDirect(@PathVariable Long id) {
         subModuleService.deleteSubModule(id);
@@ -159,20 +173,23 @@ public class ModuleController {
     }
 
     @PostMapping("/subModule/bulk-by-modules")
+    @PreAuthorize("@access.has('MODULE_READ')")
     @Operation(summary = "Get submodules in bulk by module IDs list")
     public ResponseEntity<ApiResponse<List<SubModule>>> getSubModulesBulk(@RequestBody(required = false) List<Long> moduleIds) {
         List<SubModule> list = subModuleService.getSubModulesBulk(moduleIds);
         return ResponseEntity.ok(ApiResponse.success(list, "Bulk submodules retrieved"));
     }
 
-    @GetMapping({"/sub-module/{id}/employee", "/submodule/{id}/employee"})
+    @GetMapping("/sub-module/{id}/employee")
+    @PreAuthorize("@access.hasSubModuleAccess('MODULE_READ', #id)")
     @Operation(summary = "Get developers assigned to submodule")
     public ResponseEntity<ApiResponse<List<SubModuleDevAllocation>>> getSubModuleDevs(@PathVariable Long id) {
         List<SubModuleDevAllocation> list = subModuleService.getSubModuleDevs(id);
         return ResponseEntity.ok(ApiResponse.success(list, "Submodule developers retrieved"));
     }
 
-    @PostMapping({"/sub-module/{id}/employee", "/submodule/{id}/employee"})
+    @PostMapping("/sub-module/{id}/employee")
+    @PreAuthorize("@access.hasSubModuleAccess('MODULE_UPDATE', #id)")
     @Operation(summary = "Assign developer to submodule")
     public ResponseEntity<ApiResponse<SubModuleDevAllocation>> assignDevToSubModule(
             @PathVariable Long id,
@@ -186,7 +203,8 @@ public class ModuleController {
         return ResponseEntity.ok(ApiResponse.success(allocation, "Developer assigned to submodule"));
     }
 
-    @DeleteMapping({"/sub-module/{moduleId}/employee/{employeeId}", "/submodule/{moduleId}/employee/{employeeId}"})
+    @DeleteMapping("/sub-module/{moduleId}/employee/{employeeId}")
+    @PreAuthorize("@access.hasModuleAccess('MODULE_UPDATE', #moduleId)")
     @Operation(summary = "Remove developer from submodule")
     public ResponseEntity<ApiResponse<Void>> removeDevFromSubModule(
             @PathVariable Long moduleId,
@@ -197,6 +215,7 @@ public class ModuleController {
     }
 
     @PostMapping("/allocate-module-leader")
+    @PreAuthorize("@access.has('MODULE_UPDATE')")
     @Operation(summary = "Allocate module leader")
     public ResponseEntity<ApiResponse<ModuleLeaderAllocation>> allocateModuleLeader(@RequestBody Map<String, Long> body) {
         Long moduleId = body.get("moduleId");
@@ -209,6 +228,7 @@ public class ModuleController {
     }
 
     @DeleteMapping("/allocate-module-leader/{allocateModuleId}")
+    @PreAuthorize("@access.has('MODULE_UPDATE')")
     @Operation(summary = "Deallocate module leader")
     public ResponseEntity<ApiResponse<Void>> deallocateModuleLeader(@PathVariable Long allocateModuleId) {
         moduleService.deallocateModuleLeader(allocateModuleId);
@@ -216,6 +236,7 @@ public class ModuleController {
     }
 
     @GetMapping("/module/{moduleId}/allocated-leader")
+    @PreAuthorize("@access.hasModuleAccess('MODULE_READ', #moduleId)")
     @Operation(summary = "Get allocated leader for a module")
     public ResponseEntity<ApiResponse<ModuleLeaderAllocation>> getAllocatedLeader(@PathVariable Long moduleId) {
         ModuleLeaderAllocation alloc = moduleService.getAllocatedLeader(moduleId);

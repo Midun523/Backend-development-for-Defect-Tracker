@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +40,7 @@ public class AuthController {
     }
 
     @PostMapping("/auth/change-password")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Change password for authenticated user")
     public ResponseEntity<ApiResponse<Void>> changePassword(
             Authentication authentication,
@@ -63,12 +65,14 @@ public class AuthController {
     }
 
     @PostMapping("/auth/log-out")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Logout user")
     public ResponseEntity<ApiResponse<Void>> logout() {
         return ResponseEntity.ok(ApiResponse.success(null, "Logged out successfully"));
     }
 
     @GetMapping("/user/me/permissions")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get current authenticated user's permissions")
     public ResponseEntity<ApiResponse<List<String>>> getCurrentUserPermissions(Authentication authentication) {
         List<String> permissions = authService.getCurrentUserPermissions(authentication.getName());
@@ -76,6 +80,7 @@ public class AuthController {
     }
 
     @GetMapping("/user/me/projects")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get accessible projects for current user")
     public ResponseEntity<ApiResponse<List<Project>>> getCurrentUserProjects(Authentication authentication) {
         List<Project> projects = authService.getCurrentUserProjects(authentication.getName());
@@ -83,6 +88,7 @@ public class AuthController {
     }
 
     @GetMapping("/user/me/projects/{projectId}/permissions")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get project permissions for current user")
     public ResponseEntity<ApiResponse<List<String>>> getCurrentUserProjectPermissions(
             Authentication authentication,
@@ -93,6 +99,7 @@ public class AuthController {
     }
 
     @GetMapping("/user/me")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get current user profile")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getCurrentUser(Authentication authentication) {
         UserProfileResponse profile = authService.getCurrentUserProfile(authentication.getName());

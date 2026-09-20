@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -20,6 +21,7 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
     @GetMapping("/project/{projectId}/release/{releaseId}/dashboard")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get full dashboard summary KPIs for project and release")
     public ResponseEntity<ApiResponse<DashboardSummaryResponse>> getDashboardSummary(
             @PathVariable Long projectId,
@@ -30,6 +32,7 @@ public class DashboardController {
     }
 
     @GetMapping("/project/{projectId}/dashboard/reopened")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get reopened defect counts for project")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getReopenedDefects(@PathVariable Long projectId) {
         Map<String, Object> res = dashboardService.getReopenedDefects(projectId);
@@ -37,6 +40,7 @@ public class DashboardController {
     }
 
     @GetMapping("/project/{projectId}/release/{releaseId}/dashboard/time-to-find")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get average time to find defects")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTimeToFind(
             @PathVariable Long projectId,
@@ -47,6 +51,7 @@ public class DashboardController {
     }
 
     @GetMapping("/project/{projectId}/release/{releaseId}/dashboard/time-to-fixed")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get average time to fix defects")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTimeToFix(
             @PathVariable Long projectId,
@@ -57,6 +62,7 @@ public class DashboardController {
     }
 
     @GetMapping("/project/{projectId}/defect/severity-breakdown")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get defect severity breakdown for project")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getSeverityBreakdown(@PathVariable Long projectId) {
         Map<String, Long> breakdown = dashboardService.getSeverityBreakdown(projectId);
@@ -64,6 +70,7 @@ public class DashboardController {
     }
 
     @GetMapping("/project/{projectId}/defect-type")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get defect count grouped by defect type")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getDefectsByType(@PathVariable Long projectId) {
         Map<String, Long> res = dashboardService.getTypeBreakdown(projectId);
@@ -71,6 +78,7 @@ public class DashboardController {
     }
 
     @GetMapping("/project/{projectId}/defect-module")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get defect count grouped by module")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getDefectsByModules(@PathVariable Long projectId) {
         Map<String, Long> res = dashboardService.getModuleBreakdown(projectId);
@@ -78,6 +86,7 @@ public class DashboardController {
     }
 
     @GetMapping("/project/{projectId}/defect-density")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get defect density for project")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDefectDensity(@PathVariable Long projectId) {
         Map<String, Object> res = dashboardService.getDefectDensity(projectId);

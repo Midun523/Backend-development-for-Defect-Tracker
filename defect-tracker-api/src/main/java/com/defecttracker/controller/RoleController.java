@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class RoleController {
     private final RoleService roleService;
 
     @PostMapping("/role")
+    @PreAuthorize("@access.has('ROLE_CREATE')")
     @Operation(summary = "Create role")
     public ResponseEntity<ApiResponse<Role>> createRole(@RequestBody Role role) {
         Role created = roleService.createRole(role);
@@ -30,6 +32,7 @@ public class RoleController {
     }
 
     @GetMapping("/role")
+    @PreAuthorize("@access.has('ROLE_READ')")
     @Operation(summary = "Get roles paginated or all")
     public ResponseEntity<ApiResponse<Object>> getRoles(
             @RequestParam(required = false) Integer page,
@@ -55,6 +58,7 @@ public class RoleController {
     }
 
     @GetMapping("/role/{id}")
+    @PreAuthorize("@access.has('ROLE_READ')")
     @Operation(summary = "Get role by ID")
     public ResponseEntity<ApiResponse<Role>> getRoleById(@PathVariable Long id) {
         Role role = roleService.getRoleById(id);
@@ -62,6 +66,7 @@ public class RoleController {
     }
 
     @PutMapping("/role/{id}")
+    @PreAuthorize("@access.has('ROLE_UPDATE')")
     @Operation(summary = "Update role")
     public ResponseEntity<ApiResponse<Role>> updateRole(@PathVariable Long id, @RequestBody Role role) {
         Role updated = roleService.updateRole(id, role);
@@ -69,6 +74,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/role/{id}")
+    @PreAuthorize("@access.has('ROLE_DELETE')")
     @Operation(summary = "Delete role")
     public ResponseEntity<ApiResponse<Void>> deleteRole(@PathVariable Long id) {
         roleService.deleteRole(id);
@@ -76,6 +82,7 @@ public class RoleController {
     }
 
     @GetMapping("/assign-permission/matrix")
+    @PreAuthorize("@access.has('ROLE_PERMISSION_READ') or @access.has('ROLE_READ')")
     @Operation(summary = "Get complete role-permission matrix")
     public ResponseEntity<ApiResponse<List<RolePermissionMatrixResponse>>> getRolePermissionMatrix() {
         List<RolePermissionMatrixResponse> matrix = roleService.getRolePermissionMatrix();
@@ -83,6 +90,7 @@ public class RoleController {
     }
 
     @GetMapping("/assign-permission/matrix/{roleId}")
+    @PreAuthorize("@access.has('ROLE_PERMISSION_READ') or @access.has('ROLE_READ')")
     @Operation(summary = "Get role-permission matrix by role ID")
     public ResponseEntity<ApiResponse<RolePermissionMatrixResponse>> getRolePermissionMatrixByRoleId(@PathVariable Long roleId) {
         RolePermissionMatrixResponse matrix = roleService.getRolePermissionMatrixByRoleId(roleId);
@@ -90,6 +98,7 @@ public class RoleController {
     }
 
     @PostMapping("/assign-permission/matrix")
+    @PreAuthorize("@access.has('ROLE_PERMISSION_ASSIGN')")
     @Operation(summary = "Assign permissions to role")
     public ResponseEntity<ApiResponse<Void>> assignPermissions(@RequestBody RolePermissionAssignRequest request) {
         roleService.assignPermissionsToRole(request);
@@ -97,6 +106,7 @@ public class RoleController {
     }
 
     @GetMapping("/role/{roleId}/assigned-points")
+    @PreAuthorize("@access.has('ROLE_PERMISSION_READ') or @access.has('ROLE_READ')")
     @Operation(summary = "Get assigned points for role")
     public ResponseEntity<ApiResponse<RolePermissionMatrixResponse>> getRoleAssignedPoints(@PathVariable Long roleId) {
         RolePermissionMatrixResponse matrix = roleService.getRolePermissionMatrixByRoleId(roleId);

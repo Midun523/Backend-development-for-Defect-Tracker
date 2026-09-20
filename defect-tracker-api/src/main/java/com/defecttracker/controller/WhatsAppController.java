@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -19,6 +20,7 @@ public class WhatsAppController {
     private final WhatsAppBridgeService whatsAppBridgeService;
 
     @PostMapping("/send")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Send a WhatsApp notification message")
     public ResponseEntity<ApiResponse<Boolean>> sendMessage(@RequestBody Map<String, String> body) {
         String phone = body.get("phone");
@@ -28,6 +30,7 @@ public class WhatsAppController {
     }
 
     @GetMapping("/status")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get WhatsApp bridge connection status")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getStatus() {
         Map<String, Object> status = whatsAppBridgeService.getStatus();

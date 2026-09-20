@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class ClientController {
     private final ClientService clientService;
 
     @PostMapping
+    @PreAuthorize("@access.has('PROJECT_CREATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Create a new client")
     public ResponseEntity<ApiResponse<Client>> createClient(@Valid @RequestBody ClientRequest request) {
         Client client = clientService.createClient(request);
@@ -30,6 +32,7 @@ public class ClientController {
     }
 
     @GetMapping
+    @PreAuthorize("@access.has('PROJECT_READ') or @access.has('CONFIG_READ')")
     @Operation(summary = "Get clients with pagination or all list")
     public ResponseEntity<ApiResponse<Object>> getClients(
             @RequestParam(defaultValue = "0") int page,
@@ -45,6 +48,7 @@ public class ClientController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@access.has('PROJECT_READ') or @access.has('CONFIG_READ')")
     @Operation(summary = "Get client by ID")
     public ResponseEntity<ApiResponse<Client>> getClientById(@PathVariable Long id) {
         Client client = clientService.getClientById(id);
@@ -52,6 +56,7 @@ public class ClientController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@access.has('PROJECT_UPDATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Update client details")
     public ResponseEntity<ApiResponse<Client>> updateClient(
             @PathVariable Long id,
@@ -62,6 +67,7 @@ public class ClientController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@access.has('PROJECT_DELETE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Delete client")
     public ResponseEntity<ApiResponse<Void>> deleteClient(@PathVariable Long id) {
         clientService.deleteClient(id);

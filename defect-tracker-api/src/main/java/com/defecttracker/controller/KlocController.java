@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class KlocController {
     private final ProjectRepository projectRepo;
 
     @GetMapping("/project/{projectId}")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get KLOC metrics for a project")
     public ResponseEntity<ApiResponse<KlocMetric>> getProjectKloc(@PathVariable Long projectId) {
         KlocMetric metric = klocMetricRepo.findFirstByProjectIdOrderByCreatedAtDesc(projectId)
@@ -33,6 +35,7 @@ public class KlocController {
     }
 
     @PostMapping("/project/{projectId}")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_UPDATE', #projectId)")
     @Operation(summary = "Save or update KLOC metrics for a project")
     public ResponseEntity<ApiResponse<KlocMetric>> saveProjectKloc(
             @PathVariable Long projectId,
@@ -72,6 +75,7 @@ public class KlocController {
     }
 
     @GetMapping
+    @PreAuthorize("@access.has('PROJECT_READ')")
     @Operation(summary = "Get all KLOC records")
     public ResponseEntity<ApiResponse<List<KlocMetric>>> getAllKlocRecords() {
         return ResponseEntity.ok(ApiResponse.success(klocMetricRepo.findAll(), "All KLOC records retrieved"));

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class DesignationController {
     private final DesignationService designationService;
 
     @PostMapping
+    @PreAuthorize("@access.has('DESIGNATION_CREATE')")
     @Operation(summary = "Create designation")
     public ResponseEntity<ApiResponse<Designation>> createDesignation(@RequestBody Designation designation) {
         Designation created = designationService.createDesignation(designation);
@@ -28,6 +30,7 @@ public class DesignationController {
     }
 
     @GetMapping
+    @PreAuthorize("@access.has('DESIGNATION_READ')")
     @Operation(summary = "Get all designations or paginated list")
     public ResponseEntity<ApiResponse<Object>> getDesignations(
             @RequestParam(required = false) Integer page,
@@ -51,6 +54,7 @@ public class DesignationController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@access.has('DESIGNATION_READ')")
     @Operation(summary = "Get designation by ID")
     public ResponseEntity<ApiResponse<Designation>> getDesignationById(@PathVariable Long id) {
         Designation designation = designationService.getDesignationById(id);
@@ -58,6 +62,7 @@ public class DesignationController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@access.has('DESIGNATION_UPDATE')")
     @Operation(summary = "Update designation")
     public ResponseEntity<ApiResponse<Designation>> updateDesignation(@PathVariable Long id, @RequestBody Designation designation) {
         Designation updated = designationService.updateDesignation(id, designation);
@@ -65,6 +70,7 @@ public class DesignationController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@access.has('DESIGNATION_DELETE')")
     @Operation(summary = "Delete designation")
     public ResponseEntity<ApiResponse<Void>> deleteDesignation(@PathVariable Long id) {
         designationService.deleteDesignation(id);

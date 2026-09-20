@@ -1,110 +1,141 @@
 -- ==============================================================================
--- Flyway Migration V8: Email Notifications, Config, Templates, Routing & Logs
+-- Flyway Migration V8: Email Config, Templates, Preferences, Logs & Privilege Preferences
 -- ==============================================================================
 
--- 1. Configurable SMTP Settings
-CREATE TABLE IF NOT EXISTS email_configurations (
+-- 1. Email SMTP Configs
+CREATE TABLE IF NOT EXISTS email_configs (
     id BIGSERIAL PRIMARY KEY,
-    host VARCHAR(150) NOT NULL DEFAULT 'smtp.gmail.com',
-    port INT NOT NULL DEFAULT 587,
+    name VARCHAR(100) NOT NULL,
+    smtp_host VARCHAR(150) NOT NULL,
+    smtp_port INT NOT NULL,
     username VARCHAR(150),
     password VARCHAR(255),
-    from_email VARCHAR(150) NOT NULL DEFAULT 'no-reply@defecttracker.com',
-    from_name VARCHAR(150) DEFAULT 'DefectTracker Notification System',
-    auth_enabled BOOLEAN DEFAULT TRUE NOT NULL,
-    starttls_enabled BOOLEAN DEFAULT TRUE NOT NULL,
-    is_enabled BOOLEAN DEFAULT FALSE NOT NULL,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100)
+    from_email VARCHAR(150) NOT NULL,
+    from_name VARCHAR(100),
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    is_default BOOLEAN DEFAULT FALSE NOT NULL,
+    use_tls BOOLEAN DEFAULT TRUE NOT NULL,
+    use_ssl BOOLEAN DEFAULT FALSE NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Editable Email Templates with dynamic variables
+-- 2. Email Templates
 CREATE TABLE IF NOT EXISTS email_templates (
     id BIGSERIAL PRIMARY KEY,
-    notification_type VARCHAR(100) NOT NULL UNIQUE,
+    template_name VARCHAR(100) NOT NULL UNIQUE,
     subject VARCHAR(255) NOT NULL,
-    body TEXT NOT NULL,
-    description VARCHAR(255),
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100)
+    body_content TEXT NOT NULL,
+    event_trigger VARCHAR(100),
+    variables VARCHAR(500),
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    is_default BOOLEAN DEFAULT FALSE NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Role-to-Notification Type Matrix
-CREATE TABLE IF NOT EXISTS email_role_recipients (
+-- 3. Email Role Preferences
+CREATE TABLE IF NOT EXISTS email_role_preferences (
     id BIGSERIAL PRIMARY KEY,
     role_id BIGINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-    notification_type VARCHAR(100) NOT NULL,
-    is_enabled BOOLEAN DEFAULT TRUE NOT NULL,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100),
-    CONSTRAINT uk_role_notif UNIQUE (role_id, notification_type)
+    email_template_id BIGINT NOT NULL REFERENCES email_templates(id) ON DELETE CASCADE,
+    status VARCHAR(30) DEFAULT 'active' NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. Specific Employee Overrides (Opt-in or Opt-out)
-CREATE TABLE IF NOT EXISTS email_employee_overrides (
+-- 4. Email User Preferences
+CREATE TABLE IF NOT EXISTS email_user_preferences (
     id BIGSERIAL PRIMARY KEY,
-    employee_id BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
-    notification_type VARCHAR(100) NOT NULL,
-    is_enabled BOOLEAN NOT NULL, -- TRUE: force notify, FALSE: mute notifications
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100),
-    CONSTRAINT uk_emp_notif UNIQUE (employee_id, notification_type)
+    emp_id BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    email_template_id BIGINT NOT NULL REFERENCES email_templates(id) ON DELETE CASCADE,
+    status VARCHAR(30) DEFAULT 'active' NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5. Sent Email Audit Log
+-- 5. Email Logs
 CREATE TABLE IF NOT EXISTS email_logs (
     id BIGSERIAL PRIMARY KEY,
-    recipient VARCHAR(150) NOT NULL,
+    recipient_email VARCHAR(150) NOT NULL,
     subject VARCHAR(255) NOT NULL,
-    body TEXT,
-    notification_type VARCHAR(100),
-    status VARCHAR(30) NOT NULL, -- 'SENT', 'FAILED'
-    error_message TEXT,
-    sent_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+    status VARCHAR(50) NOT NULL,
+    error_message VARCHAR(1000),
+    sent_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_email_logs_type ON email_logs(notification_type);
-CREATE INDEX IF NOT EXISTS idx_email_logs_sent ON email_logs(sent_at);
+-- 6. Role Notification Settings
+CREATE TABLE IF NOT EXISTS role_notification_settings (
+    id BIGSERIAL PRIMARY KEY,
+    role_id BIGINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    point_key VARCHAR(100) NOT NULL,
+    is_email_enabled BOOLEAN DEFAULT TRUE NOT NULL,
+    is_system_enabled BOOLEAN DEFAULT TRUE NOT NULL
+);
+
+-- 7. User Extra Notification Rules
+CREATE TABLE IF NOT EXISTS user_extra_rules (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+    rule_key VARCHAR(100) NOT NULL,
+    is_enabled BOOLEAN DEFAULT TRUE NOT NULL
+);
+
+-- 8. Privilege Templates
+CREATE TABLE IF NOT EXISTS privilege_templates (
+    id BIGSERIAL PRIMARY KEY,
+    privileges_type VARCHAR(100) NOT NULL,
+    subject VARCHAR(200),
+    status VARCHAR(30) DEFAULT 'active' NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. Role Privilege Preferences
+CREATE TABLE IF NOT EXISTS role_privilege_preferences (
+    id BIGSERIAL PRIMARY KEY,
+    role_id BIGINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    privilege_template_id BIGINT NOT NULL REFERENCES privilege_templates(id) ON DELETE CASCADE,
+    status VARCHAR(30) DEFAULT 'active' NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. User Privilege Preferences
+CREATE TABLE IF NOT EXISTS user_privilege_preferences (
+    id BIGSERIAL PRIMARY KEY,
+    emp_id BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    privilege_template_id BIGINT NOT NULL REFERENCES privilege_templates(id) ON DELETE CASCADE,
+    status VARCHAR(30) DEFAULT 'active' NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
 -- ==============================================================================
--- Seed Default Email Settings & Templates
+-- Seed Data: Initial Email Config & Default Email Templates
 -- ==============================================================================
 
-INSERT INTO email_configurations (host, port, username, password, from_email, from_name, is_enabled)
-VALUES ('smtp.mailtrap.io', 2525, 'smtp_user', 'smtp_pass', 'no-reply@defecttracker.com', 'DefectTracker Alerts', FALSE)
-ON CONFLICT DO NOTHING;
+INSERT INTO email_configs (name, smtp_host, smtp_port, username, password, from_email, from_name, is_active, is_default, use_tls, use_ssl)
+VALUES ('Default Local SMTP Server', 'smtp.gmail.com', 587, 'notifications@defecttracker.com', 'app-password-here', 'notifications@defecttracker.com', 'Defect Tracker Pro', TRUE, TRUE, TRUE, FALSE);
 
-INSERT INTO email_templates (notification_type, subject, body, description) VALUES
+INSERT INTO email_templates (template_name, subject, body_content, event_trigger, variables, is_active, is_default)
+VALUES
 (
     'DEFECT_ASSIGNED',
-    '[DefectTracker] Defect Assigned: ${defectCode} - ${defectTitle}',
-    'Hello ${recipientName},\n\nYou have been assigned defect ${defectCode}: "${defectTitle}" in project "${projectName}".\n\nSeverity: ${severity}\nPriority: ${priority}\n\nPlease review and investigate.',
-    'Triggered when a defect is assigned or reassigned to an employee'
-),
-(
-    'DEFECT_STATUS_CHANGED',
-    '[DefectTracker] Status Updated: ${defectCode} is now ${statusName}',
-    'Hello ${recipientName},\n\nDefect ${defectCode} ("${defectTitle}") status has changed to "${statusName}".\n\nUpdated by: ${changedBy}\nNote: ${note}',
-    'Triggered when a defect transition occurs'
+    'New Defect Assigned: [{defectId}] in {projectName}',
+    '<p>Hello <b>{name}</b>,</p><p>You have been assigned to defect <b>{defectId}</b> in project <b>{projectName}</b>.</p><p>Please log in to the Defect Tracker to review details and begin investigation.</p>',
+    'DEFECT_ASSIGNED',
+    'name,defectId,projectName',
+    TRUE,
+    TRUE
 ),
 (
     'PASSWORD_RESET',
-    '[DefectTracker] Password Reset Request',
-    'Hello ${recipientName},\n\nA password reset was requested for your account. Please use the following token or link to reset your password:\n\nToken: ${token}\n\nThis token will expire in 1 hour. If you did not request this, please ignore this email.',
-    'Triggered on forgot password request'
-),
-(
-    'RELEASE_DEPLOYED',
-    '[DefectTracker] New Release: ${version} for ${projectName}',
-    'Hello ${recipientName},\n\nA new release ${version} ("${releaseName}") has been created for project "${projectName}".\n\nDate: ${releaseDate}\nTotal Test Cases: ${totalTestCases}',
-    'Triggered when a new release is prepared'
+    'Password Reset Request - Defect Tracker Pro',
+    '<p>Hello <b>{name}</b>,</p><p>Your password reset code is: <b>{token}</b>.</p><p>If you did not request this, please ignore this email.</p>',
+    'PASSWORD_RESET',
+    'name,token',
+    TRUE,
+    TRUE
 )
-ON CONFLICT (notification_type) DO NOTHING;
+ON CONFLICT (template_name) DO NOTHING;

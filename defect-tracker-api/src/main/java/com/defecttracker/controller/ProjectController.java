@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class ProjectController {
     private final ProjectService projectService;
 
     @PostMapping
+    @PreAuthorize("@access.has('PROJECT_CREATE')")
     @Operation(summary = "Create project")
     public ResponseEntity<ApiResponse<Project>> createProject(@Valid @RequestBody ProjectCreateRequest request) {
         Project project = projectService.createProject(request);
@@ -31,6 +33,7 @@ public class ProjectController {
     }
 
     @GetMapping
+    @PreAuthorize("@access.has('PROJECT_READ')")
     @Operation(summary = "Get all projects or search with pagination")
     public ResponseEntity<ApiResponse<Object>> getProjects(
             @RequestParam(required = false) String query,
@@ -46,6 +49,7 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #id)")
     @Operation(summary = "Get project by ID")
     public ResponseEntity<ApiResponse<Project>> getProjectById(@PathVariable Long id) {
         Project project = projectService.getProjectById(id);
@@ -53,6 +57,7 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_UPDATE', #id)")
     @Operation(summary = "Update project")
     public ResponseEntity<ApiResponse<Project>> updateProject(
             @PathVariable Long id,
@@ -63,6 +68,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_DELETE', #id)")
     @Operation(summary = "Delete project")
     public ResponseEntity<ApiResponse<Void>> deleteProject(@PathVariable Long id) {
         projectService.deleteProject(id);
@@ -70,6 +76,7 @@ public class ProjectController {
     }
 
     @PatchMapping("/{projectId}/project-kilo-of-code")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_UPDATE', #projectId)")
     @Operation(summary = "Update KLOC metric for project")
     public ResponseEntity<ApiResponse<Project>> updateProjectKloc(
             @PathVariable Long projectId,

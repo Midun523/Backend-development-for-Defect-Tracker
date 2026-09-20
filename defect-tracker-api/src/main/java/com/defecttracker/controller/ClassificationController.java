@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.defecttracker.dto.request.WorkflowSaveRequest;
@@ -36,6 +37,7 @@ public class ClassificationController {
 
     // --- Priority ---
     @GetMapping("/priority")
+    @PreAuthorize("@access.has('PRIORITY_READ')")
     public ResponseEntity<ApiResponse<Object>> getPriorities(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
@@ -50,16 +52,19 @@ public class ClassificationController {
     }
 
     @GetMapping("/priority/{id}")
+    @PreAuthorize("@access.has('PRIORITY_READ')")
     public ResponseEntity<ApiResponse<Priority>> getPriorityById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(priorityRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Priority", "id", id))));
     }
 
     @PostMapping("/priority")
+    @PreAuthorize("@access.has('PRIORITY_CREATE')")
     public ResponseEntity<ApiResponse<Priority>> createPriority(@RequestBody Priority priority) {
         return ResponseEntity.ok(ApiResponse.created(priorityRepository.save(priority), "Priority created"));
     }
 
     @PutMapping("/priority/{id}")
+    @PreAuthorize("@access.has('PRIORITY_UPDATE')")
     public ResponseEntity<ApiResponse<Priority>> updatePriority(@PathVariable Long id, @RequestBody Priority req) {
         Priority p = priorityRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Priority", "id", id));
         p.setName(req.getName());
@@ -69,6 +74,7 @@ public class ClassificationController {
     }
 
     @DeleteMapping("/priority/{id}")
+    @PreAuthorize("@access.has('PRIORITY_DELETE')")
     public ResponseEntity<ApiResponse<Void>> deletePriority(@PathVariable Long id) {
         priorityRepository.deleteById(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Priority deleted"));
@@ -76,6 +82,7 @@ public class ClassificationController {
 
     // --- Severity ---
     @GetMapping("/severity")
+    @PreAuthorize("@access.has('SEVERITY_READ')")
     public ResponseEntity<ApiResponse<Object>> getSeverities(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
@@ -90,16 +97,19 @@ public class ClassificationController {
     }
 
     @GetMapping("/severity/{id}")
+    @PreAuthorize("@access.has('SEVERITY_READ')")
     public ResponseEntity<ApiResponse<Severity>> getSeverityById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(severityRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Severity", "id", id))));
     }
 
     @PostMapping("/severity")
+    @PreAuthorize("@access.has('SEVERITY_CREATE')")
     public ResponseEntity<ApiResponse<Severity>> createSeverity(@RequestBody Severity severity) {
         return ResponseEntity.ok(ApiResponse.created(severityRepository.save(severity), "Severity created"));
     }
 
     @PutMapping("/severity/{id}")
+    @PreAuthorize("@access.has('SEVERITY_UPDATE')")
     public ResponseEntity<ApiResponse<Severity>> updateSeverity(@PathVariable Long id, @RequestBody Severity req) {
         Severity s = severityRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Severity", "id", id));
         s.setName(req.getName());
@@ -109,6 +119,7 @@ public class ClassificationController {
     }
 
     @DeleteMapping("/severity/{id}")
+    @PreAuthorize("@access.has('SEVERITY_DELETE')")
     public ResponseEntity<ApiResponse<Void>> deleteSeverity(@PathVariable Long id) {
         severityRepository.deleteById(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Severity deleted"));
@@ -116,6 +127,7 @@ public class ClassificationController {
 
     // --- Defect Type ---
     @GetMapping("/defect-type")
+    @PreAuthorize("@access.has('DEFECT_TYPE_READ')")
     public ResponseEntity<ApiResponse<Object>> getDefectTypes(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
@@ -133,11 +145,13 @@ public class ClassificationController {
     }
 
     @GetMapping("/defect-type/{id}")
+    @PreAuthorize("@access.has('DEFECT_TYPE_READ')")
     public ResponseEntity<ApiResponse<DefectType>> getDefectTypeById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(defectTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("DefectType", "id", id))));
     }
 
     @PostMapping("/defect-type")
+    @PreAuthorize("@access.has('DEFECT_TYPE_CREATE')")
     public ResponseEntity<ApiResponse<DefectType>> createDefectType(@RequestBody DefectType defectType) {
         String name = defectType.getName() != null && !defectType.getName().trim().isEmpty()
                 ? defectType.getName().trim()
@@ -149,6 +163,7 @@ public class ClassificationController {
     }
 
     @PutMapping("/defect-type/{id}")
+    @PreAuthorize("@access.has('DEFECT_TYPE_UPDATE')")
     public ResponseEntity<ApiResponse<DefectType>> updateDefectType(@PathVariable Long id, @RequestBody DefectType req) {
         DefectType dt = defectTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("DefectType", "id", id));
         String name = req.getName() != null && !req.getName().trim().isEmpty()
@@ -164,6 +179,7 @@ public class ClassificationController {
     }
 
     @DeleteMapping("/defect-type/{id}")
+    @PreAuthorize("@access.has('DEFECT_TYPE_DELETE')")
     public ResponseEntity<ApiResponse<Void>> deleteDefectType(@PathVariable Long id) {
         defectTypeRepository.deleteById(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Defect type deleted"));
@@ -171,6 +187,7 @@ public class ClassificationController {
 
     // --- Release Type ---
     @GetMapping("/release-type")
+    @PreAuthorize("@access.has('RELEASE_TYPE_READ')")
     public ResponseEntity<ApiResponse<Object>> getReleaseTypes(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
@@ -185,16 +202,19 @@ public class ClassificationController {
     }
 
     @GetMapping("/release-type/{id}")
+    @PreAuthorize("@access.has('RELEASE_TYPE_READ')")
     public ResponseEntity<ApiResponse<ReleaseType>> getReleaseTypeById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(releaseTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("ReleaseType", "id", id))));
     }
 
     @PostMapping("/release-type")
+    @PreAuthorize("@access.has('RELEASE_TYPE_CREATE')")
     public ResponseEntity<ApiResponse<ReleaseType>> createReleaseType(@RequestBody ReleaseType releaseType) {
         return ResponseEntity.ok(ApiResponse.created(releaseTypeRepository.save(releaseType), "Release type created"));
     }
 
     @PutMapping("/release-type/{id}")
+    @PreAuthorize("@access.has('RELEASE_TYPE_UPDATE')")
     public ResponseEntity<ApiResponse<ReleaseType>> updateReleaseType(@PathVariable Long id, @RequestBody ReleaseType req) {
         ReleaseType rt = releaseTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("ReleaseType", "id", id));
         rt.setName(req.getName());
@@ -203,6 +223,7 @@ public class ClassificationController {
     }
 
     @DeleteMapping("/release-type/{id}")
+    @PreAuthorize("@access.has('RELEASE_TYPE_DELETE')")
     public ResponseEntity<ApiResponse<Void>> deleteReleaseType(@PathVariable Long id) {
         releaseTypeRepository.deleteById(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Release type deleted"));
@@ -210,6 +231,7 @@ public class ClassificationController {
 
     // --- Status Type & Workflow ---
     @GetMapping("/status-type")
+    @PreAuthorize("@access.has('STATUS_TYPE_READ')")
     public ResponseEntity<ApiResponse<Object>> getStatusTypes(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
@@ -224,11 +246,13 @@ public class ClassificationController {
     }
 
     @GetMapping("/status-type/{id}")
+    @PreAuthorize("@access.has('STATUS_TYPE_READ')")
     public ResponseEntity<ApiResponse<StatusType>> getStatusTypeById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(statusTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("StatusType", "id", id))));
     }
 
     @PostMapping("/status-type")
+    @PreAuthorize("@access.has('STATUS_TYPE_CREATE')")
     public ResponseEntity<ApiResponse<StatusType>> createStatusType(@RequestBody StatusType statusType) {
         if (statusType.getName() == null && statusType.getDefectStatusName() != null) {
             statusType.setName(statusType.getDefectStatusName());
@@ -245,6 +269,7 @@ public class ClassificationController {
     }
 
     @PutMapping("/status-type/{id}")
+    @PreAuthorize("@access.has('STATUS_TYPE_UPDATE')")
     public ResponseEntity<ApiResponse<StatusType>> updateStatusType(@PathVariable Long id, @RequestBody StatusType req) {
         StatusType st = statusTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("StatusType", "id", id));
         if (req.getName() != null) {
@@ -277,6 +302,7 @@ public class ClassificationController {
     }
 
     @DeleteMapping("/status-type/{id}")
+    @PreAuthorize("@access.has('STATUS_TYPE_DELETE')")
     @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<ApiResponse<Void>> deleteStatusType(@PathVariable Long id) {
         if (!statusTypeRepository.existsById(id)) {
@@ -293,6 +319,7 @@ public class ClassificationController {
     }
 
     @GetMapping("/status/{id}/next")
+    @PreAuthorize("@access.has('WORKFLOW_READ')")
     @Operation(summary = "Get valid next statuses for a status ID in the workflow")
     public ResponseEntity<ApiResponse<List<StatusType>>> getNextStatuses(@PathVariable Long id) {
         List<StatusTransition> transitions = statusTransitionRepository.findByFromStatusId(id);
@@ -304,6 +331,7 @@ public class ClassificationController {
     }
 
     @GetMapping("/status/workflow")
+    @PreAuthorize("@access.has('WORKFLOW_READ')")
     @Operation(summary = "Get all workflow status transitions with canvas positions")
     public ResponseEntity<ApiResponse<List<StatusTransition>>> getWorkflow() {
         List<StatusTransition> list = statusTransitionRepository.findAll();
@@ -327,6 +355,7 @@ public class ClassificationController {
     }
 
     @PostMapping("/status/workflow")
+    @PreAuthorize("@access.has('WORKFLOW_CREATE') or @access.has('WORKFLOW_UPDATE')")
     @Operation(summary = "Save workflow status transitions and canvas positions")
     @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<ApiResponse<Object>> saveWorkflow(@RequestBody WorkflowSaveRequest req) {

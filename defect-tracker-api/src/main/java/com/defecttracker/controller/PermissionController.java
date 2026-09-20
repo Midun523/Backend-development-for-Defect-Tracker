@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class PermissionController {
     private final PermissionService permissionService;
 
     @GetMapping("/permission")
+    @PreAuthorize("@access.has('PERMISSION_READ') or @access.has('CONFIG_READ')")
     @Operation(summary = "Get all system permissions")
     public ResponseEntity<ApiResponse<List<Permission>>> getAllPermissions() {
         List<Permission> list = permissionService.getAllPermissions();
@@ -27,6 +29,7 @@ public class PermissionController {
     }
 
     @GetMapping("/permission/{id}")
+    @PreAuthorize("@access.has('PERMISSION_READ') or @access.has('CONFIG_READ')")
     @Operation(summary = "Get permission by ID")
     public ResponseEntity<ApiResponse<Permission>> getPermissionById(@PathVariable Long id) {
         Permission permission = permissionService.getPermissionById(id);
@@ -34,6 +37,7 @@ public class PermissionController {
     }
 
     @PostMapping("/permission")
+    @PreAuthorize("@access.has('ROLE_PERMISSION_ASSIGN') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Create permission")
     public ResponseEntity<ApiResponse<Permission>> createPermission(@RequestBody Permission permission) {
         Permission created = permissionService.createPermission(permission);
@@ -41,6 +45,7 @@ public class PermissionController {
     }
 
     @PutMapping("/permission/{id}")
+    @PreAuthorize("@access.has('ROLE_PERMISSION_ASSIGN') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Update permission")
     public ResponseEntity<ApiResponse<Permission>> updatePermission(@PathVariable Long id, @RequestBody Permission permission) {
         Permission updated = permissionService.updatePermission(id, permission);
@@ -48,6 +53,7 @@ public class PermissionController {
     }
 
     @DeleteMapping("/permission/{id}")
+    @PreAuthorize("@access.has('ROLE_PERMISSION_ASSIGN') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Delete permission")
     public ResponseEntity<ApiResponse<Void>> deletePermission(@PathVariable Long id) {
         permissionService.deletePermission(id);
@@ -55,6 +61,7 @@ public class PermissionController {
     }
 
     @GetMapping("/employee/{employeeId}/permission")
+    @PreAuthorize("@access.has('EMPLOYEE_READ') or @access.has('ROLE_PERMISSION_READ')")
     @Operation(summary = "Get permissions for an employee")
     public ResponseEntity<ApiResponse<List<String>>> getEmployeePermissions(@PathVariable Long employeeId) {
         List<String> permissions = permissionService.getEmployeePermissions(employeeId);

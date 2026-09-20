@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +23,8 @@ public class TestCaseController {
 
     private final TestCaseService testCaseService;
 
-    @PostMapping({"/sub-module/{subModuleId}/test-case", "/submodule/{subModuleId}/test-case"})
+    @PostMapping("/sub-module/{subModuleId}/test-case")
+    @PreAuthorize("@access.hasSubModuleAccess('TEST_CASE_CREATE', #subModuleId)")
     @Operation(summary = "Create test case for a submodule")
     public ResponseEntity<ApiResponse<TestCase>> createTestCase(
             @PathVariable Long subModuleId,
@@ -32,7 +34,8 @@ public class TestCaseController {
         return ResponseEntity.ok(ApiResponse.created(testCase, "Test case created successfully"));
     }
 
-    @GetMapping({"/sub-module/{subModuleId}/test-case", "/submodule/{subModuleId}/test-case"})
+    @GetMapping("/sub-module/{subModuleId}/test-case")
+    @PreAuthorize("@access.hasSubModuleAccess('TEST_CASE_READ', #subModuleId)")
     @Operation(summary = "Get test cases for a submodule with optional filters & pagination")
     public ResponseEntity<ApiResponse<PaginatedResponse<TestCase>>> getTestCasesBySubModule(
             @PathVariable Long subModuleId,
@@ -46,7 +49,8 @@ public class TestCaseController {
         return ResponseEntity.ok(ApiResponse.success(p, "Test cases retrieved"));
     }
 
-    @GetMapping({"/module/{moduleId}/test-case", "/module/{moduleId}/test-cases"})
+    @GetMapping("/module/{moduleId}/test-cases")
+    @PreAuthorize("@access.hasModuleAccess('TEST_CASE_READ', #moduleId)")
     @Operation(summary = "Get test cases for a module with optional filters & pagination")
     public ResponseEntity<ApiResponse<PaginatedResponse<TestCase>>> getTestCasesByModule(
             @PathVariable Long moduleId,
@@ -60,7 +64,8 @@ public class TestCaseController {
         return ResponseEntity.ok(ApiResponse.success(p, "Test cases retrieved"));
     }
 
-    @GetMapping({"/project/{projectId}/test-case", "/project/{projectId}/test-cases"})
+    @GetMapping("/project/{projectId}/test-cases")
+    @PreAuthorize("@access.hasProjectAccess('TEST_CASE_READ', #projectId)")
     @Operation(summary = "Get test cases for a project with optional filters & pagination")
     public ResponseEntity<ApiResponse<PaginatedResponse<TestCase>>> getTestCasesByProject(
             @PathVariable Long projectId,
@@ -74,7 +79,8 @@ public class TestCaseController {
         return ResponseEntity.ok(ApiResponse.success(p, "Test cases retrieved"));
     }
 
-    @GetMapping({"/sub-module/{subModuleId}/test-case/{id}", "/submodule/{subModuleId}/test-case/{id}"})
+    @GetMapping("/sub-module/{subModuleId}/test-case/{id}")
+    @PreAuthorize("@access.hasSubModuleAccess('TEST_CASE_READ', #subModuleId)")
     @Operation(summary = "Get test case by ID")
     public ResponseEntity<ApiResponse<TestCase>> getTestCaseById(
             @PathVariable Long subModuleId,
@@ -84,7 +90,8 @@ public class TestCaseController {
         return ResponseEntity.ok(ApiResponse.success(testCase, "Test case found"));
     }
 
-    @PutMapping({"/sub-module/{subModuleId}/test-case/{id}", "/submodule/{subModuleId}/test-case/{id}"})
+    @PutMapping("/sub-module/{subModuleId}/test-case/{id}")
+    @PreAuthorize("@access.hasSubModuleAccess('TEST_CASE_UPDATE', #subModuleId)")
     @Operation(summary = "Update test case")
     public ResponseEntity<ApiResponse<TestCase>> updateTestCase(
             @PathVariable Long subModuleId,
@@ -95,7 +102,8 @@ public class TestCaseController {
         return ResponseEntity.ok(ApiResponse.success(testCase, "Test case updated successfully"));
     }
 
-    @DeleteMapping({"/sub-module/{subModuleId}/test-case/{id}", "/submodule/{subModuleId}/test-case/{id}"})
+    @DeleteMapping("/sub-module/{subModuleId}/test-case/{id}")
+    @PreAuthorize("@access.hasSubModuleAccess('TEST_CASE_DELETE', #subModuleId)")
     @Operation(summary = "Delete test case")
     public ResponseEntity<ApiResponse<Void>> deleteTestCase(
             @PathVariable Long subModuleId,
@@ -106,26 +114,37 @@ public class TestCaseController {
     }
 
     @GetMapping("/test-case")
+    @PreAuthorize("@access.has('TEST_CASE_READ')")
     @Operation(summary = "Get all test cases in the system")
     public ResponseEntity<ApiResponse<List<TestCase>>> getAllTestCases() {
         List<TestCase> list = testCaseService.getAllTestCases();
         return ResponseEntity.ok(ApiResponse.success(list, "All test cases retrieved"));
     }
 
-    @PostMapping({"/test-case/bulk", "/sub-module/{subModuleId}/test-case/bulk"})
-    @Operation(summary = "Create test cases in bulk")
-    public ResponseEntity<ApiResponse<List<TestCase>>> createBulkTestCases(
-            @PathVariable(required = false) Long subModuleId,
+    @PostMapping("/sub-module/{subModuleId}/test-case/bulk")
+    @PreAuthorize("@access.hasSubModuleAccess('TEST_CASE_CREATE', #subModuleId)")
+    @Operation(summary = "Create test cases in bulk for a submodule")
+    public ResponseEntity<ApiResponse<List<TestCase>>> createSubModuleBulkTestCases(
+            @PathVariable Long subModuleId,
             @RequestBody List<TestCaseCreateRequest> requests
     ) {
-        if (subModuleId != null) {
-            requests.forEach(r -> r.setSubModuleId(subModuleId));
-        }
+        requests.forEach(r -> r.setSubModuleId(subModuleId));
+        List<TestCase> created = testCaseService.createBulkTestCases(requests);
+        return ResponseEntity.ok(ApiResponse.created(created, "Bulk test cases created successfully"));
+    }
+
+    @PostMapping("/test-case/bulk")
+    @PreAuthorize("@access.has('TEST_CASE_CREATE')")
+    @Operation(summary = "Create test cases in bulk globally")
+    public ResponseEntity<ApiResponse<List<TestCase>>> createBulkTestCases(
+            @RequestBody List<TestCaseCreateRequest> requests
+    ) {
         List<TestCase> created = testCaseService.createBulkTestCases(requests);
         return ResponseEntity.ok(ApiResponse.created(created, "Bulk test cases created successfully"));
     }
 
     @GetMapping("/test-case/bulk")
+    @PreAuthorize("@access.has('TEST_CASE_READ')")
     @Operation(summary = "Export bulk test cases")
     public ResponseEntity<ApiResponse<List<TestCase>>> exportBulkTestCases() {
         List<TestCase> list = testCaseService.getAllTestCases();

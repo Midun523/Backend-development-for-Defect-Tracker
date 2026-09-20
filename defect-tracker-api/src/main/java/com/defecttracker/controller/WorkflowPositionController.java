@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class WorkflowPositionController {
     private final WorkflowPositionService workflowPositionService;
 
     @PostMapping
+    @PreAuthorize("@access.has('WORKFLOW_CREATE') or @access.has('WORKFLOW_UPDATE')")
     @Operation(summary = "Save single workflow node position")
     public ResponseEntity<ApiResponse<WorkflowPosition>> savePosition(@Valid @RequestBody WorkflowPositionRequest request) {
         WorkflowPosition position = workflowPositionService.savePosition(request);
@@ -29,6 +31,7 @@ public class WorkflowPositionController {
     }
 
     @PostMapping("/bulk")
+    @PreAuthorize("@access.has('WORKFLOW_CREATE') or @access.has('WORKFLOW_UPDATE')")
     @Operation(summary = "Save bulk workflow node positions")
     public ResponseEntity<ApiResponse<List<WorkflowPosition>>> saveBulkPositions(@RequestBody List<WorkflowPositionRequest> requests) {
         List<WorkflowPosition> positions = workflowPositionService.saveBulkPositions(requests);
@@ -36,6 +39,7 @@ public class WorkflowPositionController {
     }
 
     @GetMapping
+    @PreAuthorize("@access.has('WORKFLOW_READ')")
     @Operation(summary = "Get workflow positions optionally filtered by project")
     public ResponseEntity<ApiResponse<List<WorkflowPosition>>> getPositions(@RequestParam(required = false) Long projectId) {
         List<WorkflowPosition> positions = workflowPositionService.getPositionsByProject(projectId);

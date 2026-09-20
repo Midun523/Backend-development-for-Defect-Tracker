@@ -2,86 +2,63 @@
 -- Flyway Migration V2: Master Data (Severity, Priority, DefectType, ReleaseType) & Workflow
 -- ==============================================================================
 
--- 1. Severities (with sortable weight)
+-- 1. Severities
 CREATE TABLE IF NOT EXISTS severities (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
-    weight INT NOT NULL DEFAULT 1,
-    description VARCHAR(255),
-    color_code VARCHAR(30) DEFAULT '#3B82F6',
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100)
+    color VARCHAR(30),
+    description VARCHAR(255)
 );
 
--- 2. Priorities (with sortable weight)
+-- 2. Priorities
 CREATE TABLE IF NOT EXISTS priorities (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
-    weight INT NOT NULL DEFAULT 1,
-    description VARCHAR(255),
-    color_code VARCHAR(30) DEFAULT '#3B82F6',
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100)
+    color VARCHAR(30),
+    description VARCHAR(255)
 );
 
 -- 3. Defect Types
 CREATE TABLE IF NOT EXISTS defect_types (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
-    description VARCHAR(255),
-    color_code VARCHAR(30) DEFAULT '#6B7280',
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100)
+    description VARCHAR(255)
 );
 
 -- 4. Release Types
 CREATE TABLE IF NOT EXISTS release_types (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
-    description VARCHAR(255),
-    color_code VARCHAR(30) DEFAULT '#6B7280',
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100)
+    description VARCHAR(255)
 );
 
--- 5. Status Types (Configurable status node with UI visual editor coordinates & stage flags)
+-- 5. Status Types
 CREATE TABLE IF NOT EXISTS status_types (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
-    category VARCHAR(30) NOT NULL DEFAULT 'OPEN', -- 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'
-    display_color VARCHAR(30) DEFAULT '#3B82F6' NOT NULL,
-    is_default_initial BOOLEAN DEFAULT FALSE NOT NULL,
-    is_open_stage BOOLEAN DEFAULT FALSE NOT NULL,
-    is_resolved_stage BOOLEAN DEFAULT FALSE NOT NULL,
-    position_x DOUBLE PRECISION DEFAULT 100.0,
-    position_y DOUBLE PRECISION DEFAULT 100.0,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100)
+    color VARCHAR(30),
+    type VARCHAR(50),
+    description VARCHAR(255),
+    is_default BOOLEAN DEFAULT FALSE NOT NULL,
+    order_index INT DEFAULT 0 NOT NULL
 );
 
--- 6. Workflow Transitions (Directed edges from_status -> to_status)
-CREATE TABLE IF NOT EXISTS workflow_transitions (
+-- 6. Status Transitions (Directed edges from_status -> to_status)
+CREATE TABLE IF NOT EXISTS status_transitions (
     id BIGSERIAL PRIMARY KEY,
     from_status_id BIGINT NOT NULL REFERENCES status_types(id) ON DELETE CASCADE,
-    to_status_id BIGINT NOT NULL REFERENCES status_types(id) ON DELETE CASCADE,
-    name VARCHAR(100),
-    description VARCHAR(255),
-    requires_comment BOOLEAN DEFAULT FALSE NOT NULL,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(100),
-    updated_by VARCHAR(100),
-    CONSTRAINT uk_workflow_edge UNIQUE (from_status_id, to_status_id)
+    to_status_id BIGINT NOT NULL REFERENCES status_types(id) ON DELETE CASCADE
+);
+
+-- 7. Workflow Positions (Canvas node positions)
+CREATE TABLE IF NOT EXISTS workflow_positions (
+    id BIGSERIAL PRIMARY KEY,
+    status_type_id BIGINT NOT NULL REFERENCES status_types(id) ON DELETE CASCADE,
+    project_id BIGINT,
+    position_x DOUBLE PRECISION NOT NULL,
+    position_y DOUBLE PRECISION NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==============================================================================
@@ -89,92 +66,90 @@ CREATE TABLE IF NOT EXISTS workflow_transitions (
 -- ==============================================================================
 
 -- Seed Severities
-INSERT INTO severities (name, weight, description, color_code) VALUES
-('Low', 1, 'Cosmetic or minor issue with minimal business impact', '#10B981'),
-('Medium', 2, 'Non-critical issue with acceptable workaround', '#3B82F6'),
-('High', 3, 'Significant feature failure affecting core functionality', '#F59E0B'),
-('Critical', 4, 'System crash, data loss, or total blocker', '#EF4444')
+INSERT INTO severities (name, color, description) VALUES
+('Low', '#10B981', 'Cosmetic or minor issue with minimal business impact'),
+('Medium', '#3B82F6', 'Non-critical issue with acceptable workaround'),
+('High', '#F59E0B', 'Significant feature failure affecting core functionality'),
+('Critical', '#EF4444', 'System crash, data loss, or total blocker')
 ON CONFLICT (name) DO NOTHING;
 
 -- Seed Priorities
-INSERT INTO priorities (name, weight, description, color_code) VALUES
-('Low', 1, 'Can be resolved in upcoming release cycles', '#10B981'),
-('Medium', 2, 'Normal priority fixing order', '#3B82F6'),
-('High', 3, 'Must be resolved in current sprint/release', '#F97316'),
-('Urgent', 4, 'Requires immediate hotfix intervention', '#DC2626')
+INSERT INTO priorities (name, color, description) VALUES
+('Low', '#10B981', 'Can be resolved in upcoming release cycles'),
+('Medium', '#3B82F6', 'Normal priority fixing order'),
+('High', '#F97316', 'Must be resolved in current sprint/release'),
+('Urgent', '#DC2626', 'Requires immediate hotfix intervention')
 ON CONFLICT (name) DO NOTHING;
 
 -- Seed Defect Types
-INSERT INTO defect_types (name, description, color_code) VALUES
-('Functional', 'Software behavior deviates from specifications', '#3B82F6'),
-('UI/UX', 'Layout, styling, typography, or alignment issue', '#8B5CF6'),
-('Performance', 'Slow response times or high resource utilization', '#F59E0B'),
-('Security', 'Vulnerability or authorization flaw', '#EF4444'),
-('Integration', 'Third-party or inter-service communication failure', '#10B981'),
-('Usability', 'Difficulty in navigation or counter-intuitive workflow', '#6B7280')
+INSERT INTO defect_types (name, description) VALUES
+('Functional', 'Software behavior deviates from specifications'),
+('UI/UX', 'Layout, styling, typography, or alignment issue'),
+('Performance', 'Slow response times or high resource utilization'),
+('Security', 'Vulnerability or authorization flaw'),
+('Integration', 'Third-party or inter-service communication failure'),
+('Usability', 'Difficulty in navigation or counter-intuitive workflow')
 ON CONFLICT (name) DO NOTHING;
 
 -- Seed Release Types
-INSERT INTO release_types (name, description, color_code) VALUES
-('Major', 'Major release introducing significant features or architecture updates', '#6366F1'),
-('Minor', 'Minor release with incremental feature additions', '#3B82F6'),
-('Patch', 'Maintenance release containing bug fixes', '#10B981'),
-('Hotfix', 'Urgent production fix for critical defects', '#EF4444')
+INSERT INTO release_types (name, description) VALUES
+('Major', 'Major release introducing significant features or architecture updates'),
+('Minor', 'Minor release with incremental feature additions'),
+('Patch', 'Maintenance release containing bug fixes'),
+('Hotfix', 'Urgent production fix for critical defects')
 ON CONFLICT (name) DO NOTHING;
 
--- Seed Status Types with visual node positions and stage semantics
-INSERT INTO status_types (name, category, display_color, is_default_initial, is_open_stage, is_resolved_stage, position_x, position_y) VALUES
-('New', 'OPEN', '#6366F1', TRUE, TRUE, FALSE, 100.0, 150.0),
-('Open', 'OPEN', '#3B82F6', FALSE, TRUE, FALSE, 300.0, 150.0),
-('In Progress', 'IN_PROGRESS', '#F59E0B', FALSE, FALSE, FALSE, 500.0, 150.0),
-('Fixed', 'RESOLVED', '#10B981', FALSE, FALSE, TRUE, 700.0, 150.0),
-('Reopened', 'OPEN', '#EC4899', FALSE, TRUE, FALSE, 500.0, 320.0),
-('Closed', 'CLOSED', '#6B7280', FALSE, FALSE, TRUE, 900.0, 150.0),
-('Rejected', 'CLOSED', '#EF4444', FALSE, FALSE, TRUE, 300.0, 320.0)
+-- Seed Status Types
+INSERT INTO status_types (name, color, type, description, is_default, order_index) VALUES
+('New', '#6366F1', 'OPEN', 'Newly logged defect', TRUE, 1),
+('Open', '#3B82F6', 'OPEN', 'Accepted and assigned defect', FALSE, 2),
+('In Progress', '#F59E0B', 'IN_PROGRESS', 'Under active investigation/fixing', FALSE, 3),
+('Fixed', '#10B981', 'RESOLVED', 'Fix applied and ready for QA testing', FALSE, 4),
+('Reopened', '#EC4899', 'OPEN', 'Defect recurred or fix failed', FALSE, 5),
+('Closed', '#6B7280', 'CLOSED', 'Verified and closed defect', FALSE, 6),
+('Rejected', '#EF4444', 'CLOSED', 'Not a bug or won''t fix', FALSE, 7)
 ON CONFLICT (name) DO NOTHING;
 
 -- Seed Default Workflow Transitions (Edges)
-INSERT INTO workflow_transitions (from_status_id, to_status_id, name, description)
-SELECT s1.id, s2.id, 'Triage and Open', 'Move newly reported defect to open'
-FROM status_types s1, status_types s2 WHERE s1.name = 'New' AND s2.name = 'Open'
-ON CONFLICT (from_status_id, to_status_id) DO NOTHING;
+INSERT INTO status_transitions (from_status_id, to_status_id)
+SELECT s1.id, s2.id FROM status_types s1, status_types s2 WHERE s1.name = 'New' AND s2.name = 'Open';
 
-INSERT INTO workflow_transitions (from_status_id, to_status_id, name, description)
-SELECT s1.id, s2.id, 'Reject Defect', 'Defect is invalid, duplicate, or working as designed'
-FROM status_types s1, status_types s2 WHERE s1.name = 'New' AND s2.name = 'Rejected'
-ON CONFLICT (from_status_id, to_status_id) DO NOTHING;
+INSERT INTO status_transitions (from_status_id, to_status_id)
+SELECT s1.id, s2.id FROM status_types s1, status_types s2 WHERE s1.name = 'New' AND s2.name = 'Rejected';
 
-INSERT INTO workflow_transitions (from_status_id, to_status_id, name, description)
-SELECT s1.id, s2.id, 'Start Investigation', 'Developer begins working on fix'
-FROM status_types s1, status_types s2 WHERE s1.name = 'Open' AND s2.name = 'In Progress'
-ON CONFLICT (from_status_id, to_status_id) DO NOTHING;
+INSERT INTO status_transitions (from_status_id, to_status_id)
+SELECT s1.id, s2.id FROM status_types s1, status_types s2 WHERE s1.name = 'Open' AND s2.name = 'In Progress';
 
-INSERT INTO workflow_transitions (from_status_id, to_status_id, name, description)
-SELECT s1.id, s2.id, 'Reject from Open', 'Reject defect during open analysis'
-FROM status_types s1, status_types s2 WHERE s1.name = 'Open' AND s2.name = 'Rejected'
-ON CONFLICT (from_status_id, to_status_id) DO NOTHING;
+INSERT INTO status_transitions (from_status_id, to_status_id)
+SELECT s1.id, s2.id FROM status_types s1, status_types s2 WHERE s1.name = 'Open' AND s2.name = 'Rejected';
 
-INSERT INTO workflow_transitions (from_status_id, to_status_id, name, description)
-SELECT s1.id, s2.id, 'Mark Fixed', 'Developer deployed fix for verification'
-FROM status_types s1, status_types s2 WHERE s1.name = 'In Progress' AND s2.name = 'Fixed'
-ON CONFLICT (from_status_id, to_status_id) DO NOTHING;
+INSERT INTO status_transitions (from_status_id, to_status_id)
+SELECT s1.id, s2.id FROM status_types s1, status_types s2 WHERE s1.name = 'In Progress' AND s2.name = 'Fixed';
 
-INSERT INTO workflow_transitions (from_status_id, to_status_id, name, description)
-SELECT s1.id, s2.id, 'Verify and Close', 'QA verified fix in test environment'
-FROM status_types s1, status_types s2 WHERE s1.name = 'Fixed' AND s2.name = 'Closed'
-ON CONFLICT (from_status_id, to_status_id) DO NOTHING;
+INSERT INTO status_transitions (from_status_id, to_status_id)
+SELECT s1.id, s2.id FROM status_types s1, status_types s2 WHERE s1.name = 'Fixed' AND s2.name = 'Closed';
 
-INSERT INTO workflow_transitions (from_status_id, to_status_id, name, description)
-SELECT s1.id, s2.id, 'Reopen Defect', 'QA verification failed; defect reopened'
-FROM status_types s1, status_types s2 WHERE s1.name = 'Fixed' AND s2.name = 'Reopened'
-ON CONFLICT (from_status_id, to_status_id) DO NOTHING;
+INSERT INTO status_transitions (from_status_id, to_status_id)
+SELECT s1.id, s2.id FROM status_types s1, status_types s2 WHERE s1.name = 'Fixed' AND s2.name = 'Reopened';
 
-INSERT INTO workflow_transitions (from_status_id, to_status_id, name, description)
-SELECT s1.id, s2.id, 'Restart Work on Reopened Defect', 'Developer continues fix on reopened defect'
-FROM status_types s1, status_types s2 WHERE s1.name = 'Reopened' AND s2.name = 'In Progress'
-ON CONFLICT (from_status_id, to_status_id) DO NOTHING;
+INSERT INTO status_transitions (from_status_id, to_status_id)
+SELECT s1.id, s2.id FROM status_types s1, status_types s2 WHERE s1.name = 'Reopened' AND s2.name = 'In Progress';
 
-INSERT INTO workflow_transitions (from_status_id, to_status_id, name, description)
-SELECT s1.id, s2.id, 'Reopen Closed Defect', 'Issue recurred after closure'
-FROM status_types s1, status_types s2 WHERE s1.name = 'Closed' AND s2.name = 'Reopened'
-ON CONFLICT (from_status_id, to_status_id) DO NOTHING;
+INSERT INTO status_transitions (from_status_id, to_status_id)
+SELECT s1.id, s2.id FROM status_types s1, status_types s2 WHERE s1.name = 'Closed' AND s2.name = 'Reopened';
+
+-- Seed Workflow Positions
+INSERT INTO workflow_positions (status_type_id, position_x, position_y)
+SELECT s.id, 100.0, 150.0 FROM status_types s WHERE s.name = 'New';
+INSERT INTO workflow_positions (status_type_id, position_x, position_y)
+SELECT s.id, 300.0, 150.0 FROM status_types s WHERE s.name = 'Open';
+INSERT INTO workflow_positions (status_type_id, position_x, position_y)
+SELECT s.id, 500.0, 150.0 FROM status_types s WHERE s.name = 'In Progress';
+INSERT INTO workflow_positions (status_type_id, position_x, position_y)
+SELECT s.id, 700.0, 150.0 FROM status_types s WHERE s.name = 'Fixed';
+INSERT INTO workflow_positions (status_type_id, position_x, position_y)
+SELECT s.id, 500.0, 320.0 FROM status_types s WHERE s.name = 'Reopened';
+INSERT INTO workflow_positions (status_type_id, position_x, position_y)
+SELECT s.id, 900.0, 150.0 FROM status_types s WHERE s.name = 'Closed';
+INSERT INTO workflow_positions (status_type_id, position_x, position_y)
+SELECT s.id, 300.0, 320.0 FROM status_types s WHERE s.name = 'Rejected';

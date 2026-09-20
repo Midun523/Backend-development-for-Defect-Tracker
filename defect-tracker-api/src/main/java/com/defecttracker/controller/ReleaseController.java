@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class ReleaseController {
     private final ReleaseService releaseService;
 
     @PostMapping("/release")
+    @PreAuthorize("@access.has('RELEASE_CREATE')")
     @Operation(summary = "Create release")
     public ResponseEntity<ApiResponse<Release>> createRelease(@Valid @RequestBody ReleaseCreateRequest request) {
         Release release = releaseService.createRelease(request);
@@ -32,6 +34,7 @@ public class ReleaseController {
     }
 
     @GetMapping("/release")
+    @PreAuthorize("@access.has('RELEASE_READ')")
     @Operation(summary = "Get all releases")
     public ResponseEntity<ApiResponse<List<Release>>> getAllReleases(@RequestParam(required = false) Long projectId) {
         if (projectId != null) {
@@ -41,6 +44,7 @@ public class ReleaseController {
     }
 
     @GetMapping("/release/counts")
+    @PreAuthorize("@access.has('RELEASE_READ')")
     @Operation(summary = "Get counts of releases by state")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getReleaseCounts() {
         Map<String, Object> counts = releaseService.getReleaseCounts();
@@ -48,6 +52,7 @@ public class ReleaseController {
     }
 
     @GetMapping("/release/{id}")
+    @PreAuthorize("@access.hasReleaseAccess('RELEASE_READ', #id)")
     @Operation(summary = "Get release by ID")
     public ResponseEntity<ApiResponse<Release>> getReleaseById(@PathVariable Long id) {
         Release release = releaseService.getReleaseById(id);
@@ -55,6 +60,7 @@ public class ReleaseController {
     }
 
     @PutMapping("/release/{id}")
+    @PreAuthorize("@access.hasReleaseAccess('RELEASE_UPDATE', #id)")
     @Operation(summary = "Update release")
     public ResponseEntity<ApiResponse<Release>> updateRelease(
             @PathVariable Long id,
@@ -65,6 +71,7 @@ public class ReleaseController {
     }
 
     @DeleteMapping("/release/{id}")
+    @PreAuthorize("@access.hasReleaseAccess('RELEASE_DELETE', #id)")
     @Operation(summary = "Delete release")
     public ResponseEntity<ApiResponse<Void>> deleteRelease(@PathVariable Long id) {
         releaseService.deleteRelease(id);
@@ -72,6 +79,7 @@ public class ReleaseController {
     }
 
     @PatchMapping("/release/{releaseId}/status")
+    @PreAuthorize("@access.hasReleaseAccess('RELEASE_UPDATE', #releaseId)")
     @Operation(summary = "Update release status")
     public ResponseEntity<ApiResponse<Release>> updateReleaseStatus(
             @PathVariable Long releaseId,
@@ -83,6 +91,7 @@ public class ReleaseController {
     }
 
     @GetMapping("/project/{projectId}/release/active")
+    @PreAuthorize("@access.hasProjectAccess('RELEASE_READ', #projectId)")
     @Operation(summary = "Get active release for a project")
     public ResponseEntity<ApiResponse<Release>> getActiveRelease(@PathVariable Long projectId) {
         Release release = releaseService.getActiveReleaseByProject(projectId);
@@ -90,6 +99,7 @@ public class ReleaseController {
     }
 
     @PatchMapping("/release/{releaseId}/kloc")
+    @PreAuthorize("@access.hasReleaseAccess('RELEASE_UPDATE', #releaseId)")
     @Operation(summary = "Update release KLOC")
     public ResponseEntity<ApiResponse<Release>> updateReleaseKloc(
             @PathVariable Long releaseId,
@@ -101,6 +111,7 @@ public class ReleaseController {
     }
 
     @GetMapping("/release/{releaseId}/test-case")
+    @PreAuthorize("@access.hasReleaseAccess('RELEASE_READ', #releaseId)")
     @Operation(summary = "Get test cases in a release")
     public ResponseEntity<ApiResponse<List<ReleaseTestCase>>> getReleaseTestCases(@PathVariable Long releaseId) {
         List<ReleaseTestCase> list = releaseService.getReleaseTestCases(releaseId);
@@ -108,6 +119,7 @@ public class ReleaseController {
     }
 
     @GetMapping("/release/{releaseId}/test-case/{id}")
+    @PreAuthorize("@access.hasReleaseAccess('RELEASE_READ', #releaseId)")
     @Operation(summary = "Get release test case by testcase ID")
     public ResponseEntity<ApiResponse<ReleaseTestCase>> getReleaseTestCase(
             @PathVariable Long releaseId,
@@ -118,6 +130,7 @@ public class ReleaseController {
     }
 
     @PostMapping("/release/{releaseId}/test-case/{testcaseId}/employee")
+    @PreAuthorize("@access.hasReleaseAccess('RELEASE_UPDATE', #releaseId)")
     @Operation(summary = "Assign QA employee to release test case")
     public ResponseEntity<ApiResponse<ReleaseTestCase>> assignQaToTestCase(
             @PathVariable Long releaseId,
@@ -129,7 +142,20 @@ public class ReleaseController {
         return ResponseEntity.ok(ApiResponse.success(rtc, "QA assigned to release test case"));
     }
 
+    @PatchMapping("/release/{releaseId}/test-case/employee/{employeeId}")
+    @PreAuthorize("@access.hasReleaseAccess('RELEASE_UPDATE', #releaseId)")
+    @Operation(summary = "Update employee assignment for release test cases")
+    public ResponseEntity<ApiResponse<Void>> patchReleaseTestCaseEmployee(
+            @PathVariable Long releaseId,
+            @PathVariable Long employeeId,
+            @RequestBody(required = false) Map<String, Object> body
+    ) {
+        releaseService.updateReleaseTestCaseEmployee(releaseId, employeeId, body);
+        return ResponseEntity.ok(ApiResponse.success(null, "Release test case employee updated successfully"));
+    }
+
     @GetMapping("/release/{releaseId}/test-case-qa-allocation")
+    @PreAuthorize("@access.hasReleaseAccess('RELEASE_READ', #releaseId)")
     @Operation(summary = "Get QA allocations for release test cases")
     public ResponseEntity<ApiResponse<List<ReleaseTestCase>>> getReleaseTestCaseQaAllocation(@PathVariable Long releaseId) {
         List<ReleaseTestCase> list = releaseService.getReleaseTestCases(releaseId);
@@ -137,6 +163,7 @@ public class ReleaseController {
     }
 
     @PatchMapping("/release/{releaseId}/test-case/{id}/status")
+    @PreAuthorize("@access.hasReleaseAccess('RELEASE_UPDATE', #releaseId)")
     @Operation(summary = "Update release test case execution status")
     public ResponseEntity<ApiResponse<ReleaseTestCase>> updateTestCaseStatus(
             @PathVariable Long releaseId,
@@ -165,6 +192,7 @@ public class ReleaseController {
     }
 
     @GetMapping("/testcase/allocation-log")
+    @PreAuthorize("@access.has('RELEASE_READ')")
     @Operation(summary = "Get test case allocation logs")
     public ResponseEntity<ApiResponse<List<TestCaseAllocationLog>>> getTestCaseAllocationLogs() {
         List<TestCaseAllocationLog> list = releaseService.getTestCaseAllocationLogs();

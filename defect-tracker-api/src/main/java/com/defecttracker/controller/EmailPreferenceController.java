@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,6 +35,7 @@ public class EmailPreferenceController {
     private final EmailTemplateRepository emailTemplateRepo;
 
     @GetMapping("/user/{employeeId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get user email notification preferences")
     public ResponseEntity<ApiResponse<List<EmailUserPreference>>> getUserPreferences(@PathVariable Long employeeId) {
         List<EmailUserPreference> prefs = userPrefRepo.findByEmployeeId(employeeId);
@@ -41,6 +43,7 @@ public class EmailPreferenceController {
     }
 
     @PostMapping("/user")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Set user email notification preference")
     public ResponseEntity<ApiResponse<EmailUserPreference>> setUserPreference(@RequestBody Map<String, Object> body) {
         Long employeeId = Long.valueOf(body.get("employeeId").toString());
@@ -61,6 +64,7 @@ public class EmailPreferenceController {
     }
 
     @GetMapping("/role/{roleId}")
+    @PreAuthorize("@access.has('EMAIL_CONFIG_READ') or @access.has('CONFIG_READ')")
     @Operation(summary = "Get role email notification preferences")
     public ResponseEntity<ApiResponse<List<EmailRolePreference>>> getRolePreferences(@PathVariable Long roleId) {
         List<EmailRolePreference> prefs = rolePrefRepo.findByRoleId(roleId);
@@ -68,6 +72,7 @@ public class EmailPreferenceController {
     }
 
     @PostMapping("/role")
+    @PreAuthorize("@access.has('EMAIL_CONFIG_UPDATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Set role email notification preference")
     public ResponseEntity<ApiResponse<EmailRolePreference>> setRolePreference(@RequestBody Map<String, Object> body) {
         Long roleId = Long.valueOf(body.get("roleId").toString());

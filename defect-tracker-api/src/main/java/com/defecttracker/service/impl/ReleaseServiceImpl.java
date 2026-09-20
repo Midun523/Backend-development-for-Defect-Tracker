@@ -210,6 +210,31 @@ public class ReleaseServiceImpl implements ReleaseService {
 
     @Override
     @Transactional
+    public void updateReleaseTestCaseEmployee(Long releaseId, Long employeeId, Map<String, Object> body) {
+        if (body != null && body.containsKey("testCaseId") && body.get("testCaseId") != null) {
+            Long testCaseId = Long.valueOf(String.valueOf(body.get("testCaseId")));
+            assignQaToReleaseTestCase(releaseId, testCaseId, employeeId);
+            return;
+        }
+        if (body != null && body.containsKey("testCaseIds") && body.get("testCaseIds") instanceof List) {
+            List<?> ids = (List<?>) body.get("testCaseIds");
+            for (Object idObj : ids) {
+                Long testCaseId = Long.valueOf(String.valueOf(idObj));
+                assignQaToReleaseTestCase(releaseId, testCaseId, employeeId);
+            }
+            return;
+        }
+        // If neither, allocate employee to all existing test cases in the release
+        List<ReleaseTestCase> existing = releaseTestCaseRepository.findByReleaseId(releaseId);
+        for (ReleaseTestCase rtc : existing) {
+            if (rtc.getTestCase() != null) {
+                assignQaToReleaseTestCase(releaseId, rtc.getTestCase().getId(), employeeId);
+            }
+        }
+    }
+
+    @Override
+    @Transactional
     public ReleaseTestCase updateReleaseTestCaseStatus(Long releaseId, Long testCaseId, String status, String comment) {
         return updateReleaseTestCaseStatus(releaseId, testCaseId, status, comment, null, null);
     }

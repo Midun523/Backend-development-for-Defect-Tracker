@@ -12,14 +12,15 @@ import com.defecttracker.entity.DefectHistory;
 import com.defecttracker.entity.DefectStatusLog;
 import com.defecttracker.service.DefectService;
 import com.defecttracker.service.StorageService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,6 +40,7 @@ public class DefectController {
     private final ObjectMapper objectMapper;
 
     @PostMapping(value = "/defect", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @PreAuthorize("@access.has('DEFECT_CREATE')")
     @Operation(summary = "Create a defect (JSON payload)")
     public ResponseEntity<ApiResponse<Defect>> createDefect(@RequestBody DefectCreateRequest request) {
         Defect defect = defectService.createDefect(request);
@@ -46,6 +48,7 @@ public class DefectController {
     }
 
     @PostMapping(value = "/defect", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("@access.has('DEFECT_CREATE')")
     @Operation(summary = "Create a defect with file attachment upload")
     public ResponseEntity<ApiResponse<Defect>> createDefectMultipart(
             @RequestPart(value = "data", required = false) Object dataPart,
@@ -98,6 +101,7 @@ public class DefectController {
     }
 
     @GetMapping("/defect")
+    @PreAuthorize("@access.hasProjectAccess('DEFECT_READ', #projectId)")
     @Operation(summary = "Filter defects with pagination and comprehensive criteria")
     public ResponseEntity<ApiResponse<PaginatedResponse<Defect>>> getDefects(
             @RequestParam(required = false, defaultValue = "1") Long projectId,
@@ -119,6 +123,7 @@ public class DefectController {
     }
 
     @GetMapping("/defect/{id}")
+    @PreAuthorize("@access.hasDefectAccess('DEFECT_READ', #id)")
     @Operation(summary = "Get defect by ID")
     public ResponseEntity<ApiResponse<Defect>> getDefectById(@PathVariable Long id) {
         Defect defect = defectService.getDefectById(id);
@@ -126,6 +131,7 @@ public class DefectController {
     }
 
     @PutMapping("/defect/{id}")
+    @PreAuthorize("@access.hasDefectAccess('DEFECT_UPDATE', #id)")
     @Operation(summary = "Update defect details")
     public ResponseEntity<ApiResponse<Defect>> updateDefect(
             @PathVariable Long id,
@@ -136,6 +142,7 @@ public class DefectController {
     }
 
     @DeleteMapping("/defect/{id}")
+    @PreAuthorize("@access.hasDefectAccess('DEFECT_DELETE', #id)")
     @Operation(summary = "Delete defect")
     public ResponseEntity<ApiResponse<Void>> deleteDefect(@PathVariable Long id) {
         defectService.deleteDefect(id);
@@ -143,6 +150,7 @@ public class DefectController {
     }
 
     @GetMapping("/project/{projectId}/defect")
+    @PreAuthorize("@access.hasProjectAccess('DEFECT_READ', #projectId)")
     @Operation(summary = "Get all defects for a project")
     public ResponseEntity<ApiResponse<List<Defect>>> getDefectsByProject(@PathVariable Long projectId) {
         List<Defect> list = defectService.getDefectsByProject(projectId);
@@ -150,6 +158,7 @@ public class DefectController {
     }
 
     @PostMapping("/defect/employee")
+    @PreAuthorize("@access.has('DEFECT_ASSIGN_DEVELOPER')")
     @Operation(summary = "Assign developer to defect")
     public ResponseEntity<ApiResponse<Defect>> assignDeveloper(@RequestBody Map<String, Long> body) {
         Long defectId = body.get("defectId");
@@ -159,6 +168,7 @@ public class DefectController {
     }
 
     @GetMapping("/defect/allocation/defect/{id}")
+    @PreAuthorize("@access.hasDefectAccess('DEFECT_READ', #id)")
     @Operation(summary = "Get defect allocation details")
     public ResponseEntity<ApiResponse<Defect>> getDefectAllocation(@PathVariable Long id) {
         Defect defect = defectService.getDefectById(id);
@@ -166,6 +176,7 @@ public class DefectController {
     }
 
     @PatchMapping("/defect/{defectId}/status")
+    @PreAuthorize("@access.hasDefectAccess('DEFECT_STATUS_CHANGE', #defectId)")
     @Operation(summary = "Transition defect status and record history")
     public ResponseEntity<ApiResponse<Defect>> changeStatus(
             @PathVariable Long defectId,
@@ -178,6 +189,7 @@ public class DefectController {
     }
 
     @PostMapping("/defects/bulk-reassign")
+    @PreAuthorize("@access.has('DEFECT_UPDATE')")
     @Operation(summary = "Bulk reassign defects to another developer")
     public ResponseEntity<ApiResponse<Void>> bulkReassign(@Valid @RequestBody DefectBulkReassignRequest request) {
         defectService.bulkReassign(request);
@@ -185,6 +197,7 @@ public class DefectController {
     }
 
     @GetMapping("/defect/{defectId}/comment")
+    @PreAuthorize("@access.hasDefectAccess('DEFECT_COMMENT_READ', #defectId)")
     @Operation(summary = "Get comments for a defect")
     public ResponseEntity<ApiResponse<List<DefectComment>>> getComments(@PathVariable Long defectId) {
         List<DefectComment> comments = defectService.getCommentsByDefect(defectId);
@@ -192,6 +205,7 @@ public class DefectController {
     }
 
     @PostMapping("/defect/{defectId}/comment")
+    @PreAuthorize("@access.hasDefectAccess('DEFECT_COMMENT_CREATE', #defectId)")
     @Operation(summary = "Add comment to a defect")
     public ResponseEntity<ApiResponse<DefectComment>> addComment(
             @PathVariable Long defectId,
@@ -204,6 +218,7 @@ public class DefectController {
     }
 
     @GetMapping("/defect/{defectId}/history")
+    @PreAuthorize("@access.hasDefectAccess('DEFECT_READ', #defectId)")
     @Operation(summary = "Get audit history for defect")
     public ResponseEntity<ApiResponse<List<DefectHistory>>> getHistory(@PathVariable Long defectId) {
         List<DefectHistory> history = defectService.getDefectHistory(defectId);
@@ -211,6 +226,7 @@ public class DefectController {
     }
 
     @GetMapping("/project/{projectId}/release/{releaseId}/defect-status-log")
+    @PreAuthorize("@access.hasProjectAccess('DEFECT_READ', #projectId)")
     @Operation(summary = "Get defect status logs for a project and release")
     public ResponseEntity<ApiResponse<List<DefectStatusLog>>> getStatusLogs(
             @PathVariable Long projectId,
@@ -221,6 +237,7 @@ public class DefectController {
     }
 
     @PostMapping(value = {"/defect/import/{projectId}", "/defect/import", "/defects/import/{projectId}"}, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @PreAuthorize("@access.has('DEFECT_CREATE')")
     @Operation(summary = "Import defects from file (CSV/Excel) or multipart")
     public ResponseEntity<ApiResponse<Map<String, Object>>> importDefectsFile(
             @PathVariable(required = false) Long projectId,
@@ -236,6 +253,7 @@ public class DefectController {
     }
 
     @PostMapping("/defect/bulk")
+    @PreAuthorize("@access.has('DEFECT_CREATE')")
     @Operation(summary = "Bulk import defects")
     public ResponseEntity<ApiResponse<String>> bulkImportDefects(@RequestBody List<DefectCreateRequest> requests) {
         for (DefectCreateRequest req : requests) {
@@ -245,6 +263,7 @@ public class DefectController {
     }
 
     @GetMapping("/defect/bulk")
+    @PreAuthorize("@access.hasProjectAccess('DEFECT_READ', #projectId)")
     @Operation(summary = "Bulk export defects")
     public ResponseEntity<ApiResponse<List<Defect>>> bulkExportDefects(@RequestParam(required = false, defaultValue = "1") Long projectId) {
         List<Defect> defects = defectService.getDefectsByProject(projectId);

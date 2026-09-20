@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class EmployeeController {
     private final EmployeeService employeeService;
 
     @PostMapping("/employee")
+    @PreAuthorize("@access.has('EMPLOYEE_CREATE')")
     @Operation(summary = "Create a new employee with user credentials")
     public ResponseEntity<ApiResponse<Employee>> createEmployee(@Valid @RequestBody EmployeeCreateRequest request) {
         Employee employee = employeeService.createEmployee(request);
@@ -31,6 +33,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/employee")
+    @PreAuthorize("@access.has('EMPLOYEE_READ')")
     @Operation(summary = "Get employees with pagination and optional search query")
     public ResponseEntity<ApiResponse<Object>> getEmployees(
             @RequestParam(defaultValue = "0") int page,
@@ -45,6 +48,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/employee/{id}")
+    @PreAuthorize("@access.has('EMPLOYEE_READ')")
     @Operation(summary = "Get employee by ID")
     public ResponseEntity<ApiResponse<Employee>> getEmployeeById(@PathVariable Long id) {
         Employee employee = employeeService.getEmployeeById(id);
@@ -52,6 +56,7 @@ public class EmployeeController {
     }
 
     @PutMapping("/employee/{id}")
+    @PreAuthorize("@access.has('EMPLOYEE_UPDATE')")
     @Operation(summary = "Update employee details")
     public ResponseEntity<ApiResponse<Employee>> updateEmployee(
             @PathVariable Long id,
@@ -62,6 +67,7 @@ public class EmployeeController {
     }
 
     @DeleteMapping("/employee/{id}")
+    @PreAuthorize("@access.has('EMPLOYEE_DELETE')")
     @Operation(summary = "Delete employee")
     public ResponseEntity<ApiResponse<Void>> deleteEmployee(@PathVariable Long id) {
         employeeService.deleteEmployee(id);
@@ -69,6 +75,7 @@ public class EmployeeController {
     }
 
     @PatchMapping("/employee/{id}/status")
+    @PreAuthorize("@access.has('EMPLOYEE_UPDATE')")
     @Operation(summary = "Update employee status")
     public ResponseEntity<ApiResponse<Employee>> updateEmployeeStatus(
             @PathVariable Long id,
@@ -80,6 +87,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/bench")
+    @PreAuthorize("@access.has('BENCH_READ')")
     @Operation(summary = "Get all available bench employees")
     public ResponseEntity<ApiResponse<List<Employee>>> getBenchEmployees() {
         List<Employee> bench = employeeService.getBenchEmployees();
@@ -87,6 +95,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/designation/{designationId}/employee")
+    @PreAuthorize("@access.has('EMPLOYEE_READ')")
     @Operation(summary = "Get employees by designation")
     public ResponseEntity<ApiResponse<List<Employee>>> getEmployeesByDesignation(@PathVariable Long designationId) {
         List<Employee> employees = employeeService.getEmployeesByDesignation(designationId);
@@ -94,6 +103,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/designation/{designationId}/available-managers")
+    @PreAuthorize("@access.has('PROJECT_CREATE') or @access.has('EMPLOYEE_READ')")
     @Operation(summary = "Get available managers for a designation")
     public ResponseEntity<ApiResponse<List<Employee>>> getAvailableManagers(@PathVariable Long designationId) {
         List<Employee> managers = employeeService.getAvailableManagers(designationId, null);
@@ -101,6 +111,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/designation/{designationId}/available-managers/project/{projectId}")
+    @PreAuthorize("@access.hasProjectAccess('PROJECT_UPDATE', #projectId)")
     @Operation(summary = "Get available managers for update on a project")
     public ResponseEntity<ApiResponse<List<Employee>>> getAvailableManagersForUpdate(
             @PathVariable Long designationId,
