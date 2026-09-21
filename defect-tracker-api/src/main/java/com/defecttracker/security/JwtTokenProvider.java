@@ -48,6 +48,7 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         Map<String, Object> claims = new HashMap<>();
+        claims.put("typ", "ACCESS");
         claims.put("id", userPrincipal.getId());
         claims.put("employeeId", userPrincipal.getEmployeeId());
         claims.put("role", userPrincipal.getRoleName());
@@ -55,6 +56,8 @@ public class JwtTokenProvider {
         claims.put("fullName", userPrincipal.getFullName());
 
         return Jwts.builder()
+                .issuer("defect-tracker")
+                .id(java.util.UUID.randomUUID().toString())
                 .subject(userPrincipal.getEmail())
                 .claims(claims)
                 .issuedAt(now)
@@ -80,8 +83,10 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + refreshExpirationMs);
 
         return Jwts.builder()
+                .issuer("defect-tracker")
+                .id(java.util.UUID.randomUUID().toString())
                 .subject(email)
-                .claim("type", "REFRESH")
+                .claim("typ", "REFRESH")
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(secretKey)
@@ -96,6 +101,27 @@ public class JwtTokenProvider {
                 .getPayload();
 
         return claims.getSubject();
+    }
+
+    public String getTokenType(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return claims.get("typ", String.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public boolean isAccessToken(String token) {
+        return "ACCESS".equals(getTokenType(token));
+    }
+
+    public boolean isRefreshToken(String token) {
+        return "REFRESH".equals(getTokenType(token));
     }
 
     public enum JwtValidationResult {

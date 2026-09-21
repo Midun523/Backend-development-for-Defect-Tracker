@@ -64,10 +64,24 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(null, "Password reset successful"));
     }
 
-    @PostMapping("/auth/log-out")
-    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/auth/validate-reset-token")
+    @Operation(summary = "Validate password reset token state")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> validateResetToken(@RequestParam String token) {
+        boolean valid = authService.validateResetToken(token);
+        java.util.Map<String, Object> data = java.util.Map.of(
+                "valid", valid,
+                "status", valid ? "VALID" : "INVALID"
+        );
+        return ResponseEntity.ok(ApiResponse.success(data, valid ? "Reset token is valid" : "Reset token is invalid or expired"));
+    }
+
+    @PostMapping({"/auth/log-out", "/auth/logout"})
     @Operation(summary = "Logout user")
-    public ResponseEntity<ApiResponse<Void>> logout() {
+    public ResponseEntity<ApiResponse<Void>> logout(
+            Authentication authentication,
+            @RequestBody(required = false) RefreshTokenRequest request
+    ) {
+        authService.logout(authentication != null ? authentication.getName() : null, request);
         return ResponseEntity.ok(ApiResponse.success(null, "Logged out successfully"));
     }
 

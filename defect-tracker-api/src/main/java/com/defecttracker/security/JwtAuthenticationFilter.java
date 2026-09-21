@@ -36,15 +36,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(jwt)) {
                 JwtTokenProvider.JwtValidationResult result = tokenProvider.validateTokenDetailed(jwt);
                 if (result == JwtTokenProvider.JwtValidationResult.VALID) {
-                    String email = tokenProvider.getEmailFromToken(jwt);
-                    UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+                    if (!tokenProvider.isAccessToken(jwt)) {
+                        request.setAttribute("jwt_error", "Invalid token");
+                    } else {
+                        String email = tokenProvider.getEmailFromToken(jwt);
+                        UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
 
-                    if (userDetails != null && userDetails.isEnabled()) {
-                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                userDetails, null, userDetails.getAuthorities());
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        if (userDetails != null && userDetails.isEnabled()) {
+                            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
+                            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                        }
                     }
                 } else if (result == JwtTokenProvider.JwtValidationResult.EXPIRED) {
                     request.setAttribute("jwt_error", "Token expired");

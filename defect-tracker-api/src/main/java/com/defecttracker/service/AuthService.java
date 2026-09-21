@@ -13,6 +13,8 @@ public interface AuthService {
     void changePassword(String userEmail, ChangePasswordRequest request);
     void forgetPassword(ForgetPasswordRequest request);
     void resetPassword(ResetPasswordRequest request);
+    boolean validateResetToken(String token);
+    void logout(String userEmail, RefreshTokenRequest request);
     UserProfileResponse getCurrentUserProfile(String userEmail);
     List<String> getCurrentUserPermissions(String userEmail);
     List<Project> getCurrentUserProjects(String userEmail);

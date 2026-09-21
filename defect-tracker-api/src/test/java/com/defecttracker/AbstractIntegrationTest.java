@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(AbstractIntegrationTest.TestFlywayConfig.class)
 public abstract class AbstractIntegrationTest {
 
-    protected static final String TEST_ADMIN_PASSWORD = "AdminTest_" + UUID.randomUUID().toString().replace("-", "");
+    protected static final String TEST_ADMIN_PASSWORD = "AdminTest1!" + UUID.randomUUID().toString().replace("-", "");
     protected static final String TEST_JWT_SECRET;
 
     static {
