@@ -152,7 +152,7 @@ public class EmailConfigurationController {
     @PostMapping("/role-notifications/update")
     @PreAuthorize("@access.has('EMAIL_CONFIG_UPDATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Update role notification settings")
-    public ResponseEntity<ApiResponse<Void>> updateRoleNotifications(@RequestBody RoleNotificationUpdateDTO dto) {
+    public ResponseEntity<ApiResponse<Void>> updateRoleNotifications(@Valid @RequestBody RoleNotificationUpdateDTO dto) {
         emailService.updateRoleNotifications(dto);
         return ResponseEntity.ok(ApiResponse.success(null, "Role notifications updated"));
     }
@@ -167,7 +167,7 @@ public class EmailConfigurationController {
     @PostMapping("/user/extra-rules/update")
     @PreAuthorize("@access.has('EMAIL_CONFIG_UPDATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Update user extra notification rules")
-    public ResponseEntity<ApiResponse<Void>> updateUserExtraRules(@RequestBody UserExtraRulesUpdateDTO dto) {
+    public ResponseEntity<ApiResponse<Void>> updateUserExtraRules(@Valid @RequestBody UserExtraRulesUpdateDTO dto) {
         emailService.updateUserExtraRules(dto);
         return ResponseEntity.ok(ApiResponse.success(null, "User extra rules updated"));
     }

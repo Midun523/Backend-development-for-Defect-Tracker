@@ -95,7 +95,7 @@ public class ReleaseController {
     @Operation(summary = "Update release status")
     public ResponseEntity<ApiResponse<ReleaseResponse>> updateReleaseStatus(
             @PathVariable Long releaseId,
-            @RequestBody Map<String, String> body
+            @Valid @RequestBody Map<String, String> body
     ) {
         String status = body.getOrDefault("status", "PLANNED");
         Release release = releaseService.updateReleaseStatus(releaseId, status);
@@ -115,7 +115,7 @@ public class ReleaseController {
     @Operation(summary = "Update release KLOC")
     public ResponseEntity<ApiResponse<ReleaseResponse>> updateReleaseKloc(
             @PathVariable Long releaseId,
-            @RequestBody Map<String, Double> body
+            @Valid @RequestBody Map<String, Double> body
     ) {
         Double kloc = body.getOrDefault("kloc", 0.0);
         Release release = releaseService.updateReleaseKloc(releaseId, kloc);
@@ -147,7 +147,7 @@ public class ReleaseController {
     public ResponseEntity<ApiResponse<ReleaseTestCaseResponse>> assignQaToTestCase(
             @PathVariable Long releaseId,
             @PathVariable Long testcaseId,
-            @RequestBody Map<String, Long> body
+            @Valid @RequestBody Map<String, Long> body
     ) {
         Long employeeId = body.get("employeeId");
         ReleaseTestCase rtc = releaseService.assignQaToReleaseTestCase(releaseId, testcaseId, employeeId);
@@ -160,7 +160,7 @@ public class ReleaseController {
     public ResponseEntity<ApiResponse<Void>> patchReleaseTestCaseEmployee(
             @PathVariable Long releaseId,
             @PathVariable Long employeeId,
-            @RequestBody(required = false) Map<String, Object> body
+            @Valid @RequestBody(required = false) Map<String, Object> body
     ) {
         releaseService.updateReleaseTestCaseEmployee(releaseId, employeeId, body);
         return ResponseEntity.ok(ApiResponse.success(null, "Release test case employee updated successfully"));
@@ -180,7 +180,7 @@ public class ReleaseController {
     public ResponseEntity<ApiResponse<ReleaseTestCaseResponse>> updateTestCaseStatus(
             @PathVariable Long releaseId,
             @PathVariable Long id,
-            @RequestBody Map<String, Object> body
+            @Valid @RequestBody Map<String, Object> body
     ) {
         String status = body.containsKey("status") ? String.valueOf(body.get("status")) : "NOT_RUN";
         String comment = body.containsKey("comment") && body.get("comment") != null ? String.valueOf(body.get("comment")) : null;

@@ -45,7 +45,7 @@ public class EmailPreferenceController {
     @PostMapping("/user")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Set user email notification preference")
-    public ResponseEntity<ApiResponse<EmailUserPreference>> setUserPreference(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<ApiResponse<EmailUserPreference>> setUserPreference(@jakarta.validation.Valid @RequestBody Map<String, Object> body) {
         Long employeeId = Long.valueOf(body.get("employeeId").toString());
         Long templateId = Long.valueOf(body.get("templateId").toString());
         String status = body.getOrDefault("status", "active").toString();
@@ -74,7 +74,7 @@ public class EmailPreferenceController {
     @PostMapping("/role")
     @PreAuthorize("@access.has('EMAIL_CONFIG_UPDATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Set role email notification preference")
-    public ResponseEntity<ApiResponse<EmailRolePreference>> setRolePreference(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<ApiResponse<EmailRolePreference>> setRolePreference(@jakarta.validation.Valid @RequestBody Map<String, Object> body) {
         Long roleId = Long.valueOf(body.get("roleId").toString());
         Long templateId = Long.valueOf(body.get("templateId").toString());
         String status = body.getOrDefault("status", "active").toString();

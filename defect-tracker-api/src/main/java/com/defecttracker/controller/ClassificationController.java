@@ -1,21 +1,23 @@
 package com.defecttracker.controller;
 
-import com.defecttracker.dto.response.ApiResponse;
-import com.defecttracker.dto.response.PaginatedResponse;
+import com.defecttracker.dto.request.*;
+import com.defecttracker.dto.response.*;
 import com.defecttracker.entity.*;
 import com.defecttracker.exception.ResourceNotFoundException;
+import com.defecttracker.mapper.ClassificationMapper;
 import com.defecttracker.repository.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.defecttracker.util.PageableUtils;
 
-import com.defecttracker.dto.request.WorkflowSaveRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,43 +36,53 @@ public class ClassificationController {
     private final StatusTransitionRepository statusTransitionRepository;
     private final WorkflowPositionRepository workflowPositionRepository;
     private final DefectRepository defectRepository;
+    private final ClassificationMapper classificationMapper;
 
     // --- Priority ---
     @GetMapping("/priority")
     @PreAuthorize("@access.has('PRIORITY_READ')")
-    public ResponseEntity<ApiResponse<Object>> getPriorities(
+    public ResponseEntity<ApiResponse<PaginatedResponse<PrioritySummary>>> getPriorities(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
     ) {
         if (page != null && size != null) {
-            Page<Priority> p = priorityRepository.findAll(PageRequest.of(page, size, Sort.by("id")));
-            PaginatedResponse<Priority> res = PaginatedResponse.<Priority>builder()
-                    .content(p.getContent()).pageNumber(p.getNumber()).pageSize(p.getSize()).totalElements(p.getTotalElements()).totalPages(p.getTotalPages()).build();
+            Page<Priority> p = priorityRepository.findAll(PageableUtils.of(page, size, Sort.by("id")));
+            PaginatedResponse<PrioritySummary> res = PaginatedResponse.<PrioritySummary>builder()
+                    .content(classificationMapper.toPrioritySummaryList(p.getContent())).pageNumber(p.getNumber()).pageSize(p.getSize()).totalElements(p.getTotalElements()).totalPages(p.getTotalPages()).build();
             return ResponseEntity.ok(ApiResponse.success(res, "Priorities retrieved"));
         }
-        return ResponseEntity.ok(ApiResponse.success(priorityRepository.findAll(), "Priorities retrieved"));
+        List<PrioritySummary> all = classificationMapper.toPrioritySummaryList(priorityRepository.findAll());
+        PaginatedResponse<PrioritySummary> res = PaginatedResponse.<PrioritySummary>builder()
+                .content(all).pageNumber(0).pageSize(all.size()).totalElements((long) all.size()).totalPages(1).build();
+        return ResponseEntity.ok(ApiResponse.success(res, "Priorities retrieved"));
     }
 
     @GetMapping("/priority/{id}")
     @PreAuthorize("@access.has('PRIORITY_READ')")
-    public ResponseEntity<ApiResponse<Priority>> getPriorityById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(priorityRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Priority", "id", id))));
+    public ResponseEntity<ApiResponse<PrioritySummary>> getPriorityById(@PathVariable Long id) {
+        Priority p = priorityRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Priority", "id", id));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toPrioritySummary(p)));
     }
 
     @PostMapping("/priority")
     @PreAuthorize("@access.has('PRIORITY_CREATE')")
-    public ResponseEntity<ApiResponse<Priority>> createPriority(@RequestBody Priority priority) {
-        return ResponseEntity.ok(ApiResponse.created(priorityRepository.save(priority), "Priority created"));
+    public ResponseEntity<ApiResponse<PrioritySummary>> createPriority(@Valid @RequestBody PriorityRequest request) {
+        Priority priority = Priority.builder()
+                .name(request.getName())
+                .color(request.getColor())
+                .description(request.getDescription())
+                .build();
+        return ResponseEntity.ok(ApiResponse.created(classificationMapper.toPrioritySummary(priorityRepository.save(priority)), "Priority created"));
     }
 
     @PutMapping("/priority/{id}")
     @PreAuthorize("@access.has('PRIORITY_UPDATE')")
-    public ResponseEntity<ApiResponse<Priority>> updatePriority(@PathVariable Long id, @RequestBody Priority req) {
+    public ResponseEntity<ApiResponse<PrioritySummary>> updatePriority(@PathVariable Long id, @Valid @RequestBody PriorityRequest req) {
         Priority p = priorityRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Priority", "id", id));
         p.setName(req.getName());
         p.setColor(req.getColor());
         p.setDescription(req.getDescription());
-        return ResponseEntity.ok(ApiResponse.success(priorityRepository.save(p), "Priority updated"));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toPrioritySummary(priorityRepository.save(p)), "Priority updated"));
     }
 
     @DeleteMapping("/priority/{id}")
@@ -83,39 +95,48 @@ public class ClassificationController {
     // --- Severity ---
     @GetMapping("/severity")
     @PreAuthorize("@access.has('SEVERITY_READ')")
-    public ResponseEntity<ApiResponse<Object>> getSeverities(
+    public ResponseEntity<ApiResponse<PaginatedResponse<SeveritySummary>>> getSeverities(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
     ) {
         if (page != null && size != null) {
-            Page<Severity> p = severityRepository.findAll(PageRequest.of(page, size, Sort.by("id")));
-            PaginatedResponse<Severity> res = PaginatedResponse.<Severity>builder()
-                    .content(p.getContent()).pageNumber(p.getNumber()).pageSize(p.getSize()).totalElements(p.getTotalElements()).totalPages(p.getTotalPages()).build();
+            Page<Severity> p = severityRepository.findAll(PageableUtils.of(page, size, Sort.by("id")));
+            PaginatedResponse<SeveritySummary> res = PaginatedResponse.<SeveritySummary>builder()
+                    .content(classificationMapper.toSeveritySummaryList(p.getContent())).pageNumber(p.getNumber()).pageSize(p.getSize()).totalElements(p.getTotalElements()).totalPages(p.getTotalPages()).build();
             return ResponseEntity.ok(ApiResponse.success(res, "Severities retrieved"));
         }
-        return ResponseEntity.ok(ApiResponse.success(severityRepository.findAll(), "Severities retrieved"));
+        List<SeveritySummary> all = classificationMapper.toSeveritySummaryList(severityRepository.findAll());
+        PaginatedResponse<SeveritySummary> res = PaginatedResponse.<SeveritySummary>builder()
+                .content(all).pageNumber(0).pageSize(all.size()).totalElements((long) all.size()).totalPages(1).build();
+        return ResponseEntity.ok(ApiResponse.success(res, "Severities retrieved"));
     }
 
     @GetMapping("/severity/{id}")
     @PreAuthorize("@access.has('SEVERITY_READ')")
-    public ResponseEntity<ApiResponse<Severity>> getSeverityById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(severityRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Severity", "id", id))));
+    public ResponseEntity<ApiResponse<SeveritySummary>> getSeverityById(@PathVariable Long id) {
+        Severity s = severityRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Severity", "id", id));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toSeveritySummary(s)));
     }
 
     @PostMapping("/severity")
     @PreAuthorize("@access.has('SEVERITY_CREATE')")
-    public ResponseEntity<ApiResponse<Severity>> createSeverity(@RequestBody Severity severity) {
-        return ResponseEntity.ok(ApiResponse.created(severityRepository.save(severity), "Severity created"));
+    public ResponseEntity<ApiResponse<SeveritySummary>> createSeverity(@Valid @RequestBody SeverityRequest request) {
+        Severity severity = Severity.builder()
+                .name(request.getName())
+                .color(request.getColor())
+                .description(request.getDescription())
+                .build();
+        return ResponseEntity.ok(ApiResponse.created(classificationMapper.toSeveritySummary(severityRepository.save(severity)), "Severity created"));
     }
 
     @PutMapping("/severity/{id}")
     @PreAuthorize("@access.has('SEVERITY_UPDATE')")
-    public ResponseEntity<ApiResponse<Severity>> updateSeverity(@PathVariable Long id, @RequestBody Severity req) {
+    public ResponseEntity<ApiResponse<SeveritySummary>> updateSeverity(@PathVariable Long id, @Valid @RequestBody SeverityRequest req) {
         Severity s = severityRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Severity", "id", id));
         s.setName(req.getName());
         s.setColor(req.getColor());
         s.setDescription(req.getDescription());
-        return ResponseEntity.ok(ApiResponse.success(severityRepository.save(s), "Severity updated"));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toSeveritySummary(severityRepository.save(s)), "Severity updated"));
     }
 
     @DeleteMapping("/severity/{id}")
@@ -128,43 +149,46 @@ public class ClassificationController {
     // --- Defect Type ---
     @GetMapping("/defect-type")
     @PreAuthorize("@access.has('DEFECT_TYPE_READ')")
-    public ResponseEntity<ApiResponse<Object>> getDefectTypes(
+    public ResponseEntity<ApiResponse<PaginatedResponse<DefectTypeSummary>>> getDefectTypes(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
     ) {
         if (page != null && size != null) {
-            Page<DefectType> p = defectTypeRepository.findAll(PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by("id")));
-            PaginatedResponse<DefectType> res = PaginatedResponse.<DefectType>builder()
-                    .content(p.getContent()).pageNumber(p.getNumber()).pageSize(p.getSize()).totalElements(p.getTotalElements()).totalPages(p.getTotalPages()).build();
+            Page<DefectType> p = defectTypeRepository.findAll(PageableUtils.of(page, size, Sort.by("id")));
+            PaginatedResponse<DefectTypeSummary> res = PaginatedResponse.<DefectTypeSummary>builder()
+                    .content(classificationMapper.toDefectTypeSummaryList(p.getContent())).pageNumber(p.getNumber()).pageSize(p.getSize()).totalElements(p.getTotalElements()).totalPages(p.getTotalPages()).build();
             return ResponseEntity.ok(ApiResponse.success(res, "Defect types retrieved"));
         }
-        List<DefectType> all = defectTypeRepository.findAll(Sort.by("id"));
-        PaginatedResponse<DefectType> res = PaginatedResponse.<DefectType>builder()
+        List<DefectType> allEntities = defectTypeRepository.findAll(Sort.by("id"));
+        List<DefectTypeSummary> all = classificationMapper.toDefectTypeSummaryList(allEntities);
+        PaginatedResponse<DefectTypeSummary> res = PaginatedResponse.<DefectTypeSummary>builder()
                 .content(all).pageNumber(0).pageSize(all.size()).totalElements((long) all.size()).totalPages(1).build();
         return ResponseEntity.ok(ApiResponse.success(res, "Defect types retrieved"));
     }
 
     @GetMapping("/defect-type/{id}")
     @PreAuthorize("@access.has('DEFECT_TYPE_READ')")
-    public ResponseEntity<ApiResponse<DefectType>> getDefectTypeById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(defectTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("DefectType", "id", id))));
+    public ResponseEntity<ApiResponse<DefectTypeSummary>> getDefectTypeById(@PathVariable Long id) {
+        DefectType dt = defectTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("DefectType", "id", id));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toDefectTypeSummary(dt)));
     }
 
     @PostMapping("/defect-type")
     @PreAuthorize("@access.has('DEFECT_TYPE_CREATE')")
-    public ResponseEntity<ApiResponse<DefectType>> createDefectType(@RequestBody DefectType defectType) {
-        String name = defectType.getName() != null && !defectType.getName().trim().isEmpty()
-                ? defectType.getName().trim()
-                : (defectType.getDefectTypeName() != null ? defectType.getDefectTypeName().trim() : null);
-        if (name != null) {
-            defectType.setName(name);
-        }
-        return ResponseEntity.ok(ApiResponse.created(defectTypeRepository.save(defectType), "Defect type created"));
+    public ResponseEntity<ApiResponse<DefectTypeSummary>> createDefectType(@Valid @RequestBody DefectTypeRequest request) {
+        String name = request.getName() != null && !request.getName().trim().isEmpty()
+                ? request.getName().trim()
+                : (request.getDefectTypeName() != null ? request.getDefectTypeName().trim() : null);
+        DefectType defectType = DefectType.builder()
+                .name(name)
+                .description(request.getDescription())
+                .build();
+        return ResponseEntity.ok(ApiResponse.created(classificationMapper.toDefectTypeSummary(defectTypeRepository.save(defectType)), "Defect type created"));
     }
 
     @PutMapping("/defect-type/{id}")
     @PreAuthorize("@access.has('DEFECT_TYPE_UPDATE')")
-    public ResponseEntity<ApiResponse<DefectType>> updateDefectType(@PathVariable Long id, @RequestBody DefectType req) {
+    public ResponseEntity<ApiResponse<DefectTypeSummary>> updateDefectType(@PathVariable Long id, @Valid @RequestBody DefectTypeRequest req) {
         DefectType dt = defectTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("DefectType", "id", id));
         String name = req.getName() != null && !req.getName().trim().isEmpty()
                 ? req.getName().trim()
@@ -175,7 +199,7 @@ public class ClassificationController {
         if (req.getDescription() != null) {
             dt.setDescription(req.getDescription());
         }
-        return ResponseEntity.ok(ApiResponse.success(defectTypeRepository.save(dt), "Defect type updated"));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toDefectTypeSummary(defectTypeRepository.save(dt)), "Defect type updated"));
     }
 
     @DeleteMapping("/defect-type/{id}")
@@ -188,38 +212,46 @@ public class ClassificationController {
     // --- Release Type ---
     @GetMapping("/release-type")
     @PreAuthorize("@access.has('RELEASE_TYPE_READ')")
-    public ResponseEntity<ApiResponse<Object>> getReleaseTypes(
+    public ResponseEntity<ApiResponse<PaginatedResponse<ReleaseTypeSummary>>> getReleaseTypes(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
     ) {
         if (page != null && size != null) {
-            Page<ReleaseType> p = releaseTypeRepository.findAll(PageRequest.of(page, size, Sort.by("id")));
-            PaginatedResponse<ReleaseType> res = PaginatedResponse.<ReleaseType>builder()
-                    .content(p.getContent()).pageNumber(p.getNumber()).pageSize(p.getSize()).totalElements(p.getTotalElements()).totalPages(p.getTotalPages()).build();
+            Page<ReleaseType> p = releaseTypeRepository.findAll(PageableUtils.of(page, size, Sort.by("id")));
+            PaginatedResponse<ReleaseTypeSummary> res = PaginatedResponse.<ReleaseTypeSummary>builder()
+                    .content(classificationMapper.toReleaseTypeSummaryList(p.getContent())).pageNumber(p.getNumber()).pageSize(p.getSize()).totalElements(p.getTotalElements()).totalPages(p.getTotalPages()).build();
             return ResponseEntity.ok(ApiResponse.success(res, "Release types retrieved"));
         }
-        return ResponseEntity.ok(ApiResponse.success(releaseTypeRepository.findAll(), "Release types retrieved"));
+        List<ReleaseTypeSummary> all = classificationMapper.toReleaseTypeSummaryList(releaseTypeRepository.findAll());
+        PaginatedResponse<ReleaseTypeSummary> res = PaginatedResponse.<ReleaseTypeSummary>builder()
+                .content(all).pageNumber(0).pageSize(all.size()).totalElements((long) all.size()).totalPages(1).build();
+        return ResponseEntity.ok(ApiResponse.success(res, "Release types retrieved"));
     }
 
     @GetMapping("/release-type/{id}")
     @PreAuthorize("@access.has('RELEASE_TYPE_READ')")
-    public ResponseEntity<ApiResponse<ReleaseType>> getReleaseTypeById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(releaseTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("ReleaseType", "id", id))));
+    public ResponseEntity<ApiResponse<ReleaseTypeSummary>> getReleaseTypeById(@PathVariable Long id) {
+        ReleaseType rt = releaseTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("ReleaseType", "id", id));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toReleaseTypeSummary(rt)));
     }
 
     @PostMapping("/release-type")
     @PreAuthorize("@access.has('RELEASE_TYPE_CREATE')")
-    public ResponseEntity<ApiResponse<ReleaseType>> createReleaseType(@RequestBody ReleaseType releaseType) {
-        return ResponseEntity.ok(ApiResponse.created(releaseTypeRepository.save(releaseType), "Release type created"));
+    public ResponseEntity<ApiResponse<ReleaseTypeSummary>> createReleaseType(@Valid @RequestBody ReleaseTypeRequest request) {
+        ReleaseType releaseType = ReleaseType.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .build();
+        return ResponseEntity.ok(ApiResponse.created(classificationMapper.toReleaseTypeSummary(releaseTypeRepository.save(releaseType)), "Release type created"));
     }
 
     @PutMapping("/release-type/{id}")
     @PreAuthorize("@access.has('RELEASE_TYPE_UPDATE')")
-    public ResponseEntity<ApiResponse<ReleaseType>> updateReleaseType(@PathVariable Long id, @RequestBody ReleaseType req) {
+    public ResponseEntity<ApiResponse<ReleaseTypeSummary>> updateReleaseType(@PathVariable Long id, @Valid @RequestBody ReleaseTypeRequest req) {
         ReleaseType rt = releaseTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("ReleaseType", "id", id));
         rt.setName(req.getName());
         rt.setDescription(req.getDescription());
-        return ResponseEntity.ok(ApiResponse.success(releaseTypeRepository.save(rt), "Release type updated"));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toReleaseTypeSummary(releaseTypeRepository.save(rt)), "Release type updated"));
     }
 
     @DeleteMapping("/release-type/{id}")
@@ -232,73 +264,66 @@ public class ClassificationController {
     // --- Status Type & Workflow ---
     @GetMapping("/status-type")
     @PreAuthorize("@access.has('STATUS_TYPE_READ')")
-    public ResponseEntity<ApiResponse<Object>> getStatusTypes(
+    public ResponseEntity<ApiResponse<PaginatedResponse<DefectStatusSummary>>> getStatusTypes(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
     ) {
         if (page != null && size != null) {
-            Page<StatusType> p = statusTypeRepository.findAll(PageRequest.of(page, size, Sort.by("orderIndex").and(Sort.by("id"))));
-            PaginatedResponse<StatusType> res = PaginatedResponse.<StatusType>builder()
-                    .content(p.getContent()).pageNumber(p.getNumber()).pageSize(p.getSize()).totalElements(p.getTotalElements()).totalPages(p.getTotalPages()).build();
+            Page<StatusType> p = statusTypeRepository.findAll(PageableUtils.of(page, size, Sort.by("orderIndex").and(Sort.by("id"))));
+            PaginatedResponse<DefectStatusSummary> res = PaginatedResponse.<DefectStatusSummary>builder()
+                    .content(classificationMapper.toDefectStatusSummaryList(p.getContent())).pageNumber(p.getNumber()).pageSize(p.getSize()).totalElements(p.getTotalElements()).totalPages(p.getTotalPages()).build();
             return ResponseEntity.ok(ApiResponse.success(res, "Status types retrieved"));
         }
-        return ResponseEntity.ok(ApiResponse.success(statusTypeRepository.findAll(Sort.by("orderIndex").and(Sort.by("id"))), "Status types retrieved"));
+        List<DefectStatusSummary> all = classificationMapper.toDefectStatusSummaryList(
+                statusTypeRepository.findAll(Sort.by("orderIndex").and(Sort.by("id"))));
+        PaginatedResponse<DefectStatusSummary> res = PaginatedResponse.<DefectStatusSummary>builder()
+                .content(all).pageNumber(0).pageSize(all.size()).totalElements((long) all.size()).totalPages(1).build();
+        return ResponseEntity.ok(ApiResponse.success(res, "Status types retrieved"));
     }
 
     @GetMapping("/status-type/{id}")
     @PreAuthorize("@access.has('STATUS_TYPE_READ')")
-    public ResponseEntity<ApiResponse<StatusType>> getStatusTypeById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(statusTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("StatusType", "id", id))));
+    public ResponseEntity<ApiResponse<DefectStatusSummary>> getStatusTypeById(@PathVariable Long id) {
+        StatusType st = statusTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("StatusType", "id", id));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toDefectStatusSummary(st)));
     }
 
     @PostMapping("/status-type")
     @PreAuthorize("@access.has('STATUS_TYPE_CREATE')")
-    public ResponseEntity<ApiResponse<StatusType>> createStatusType(@RequestBody StatusType statusType) {
-        if (statusType.getName() == null && statusType.getDefectStatusName() != null) {
-            statusType.setName(statusType.getDefectStatusName());
-        } else if (statusType.getName() == null && statusType.getStatusName() != null) {
-            statusType.setName(statusType.getStatusName());
-        }
-        if (statusType.getColor() == null && statusType.getColorCode() != null) {
-            statusType.setColor(statusType.getColorCode());
-        }
-        if (statusType.getType() == null && statusType.getStatusType() != null) {
-            statusType.setType(statusType.getStatusType());
-        }
-        return ResponseEntity.ok(ApiResponse.created(statusTypeRepository.save(statusType), "Status type created successfully"));
+    public ResponseEntity<ApiResponse<DefectStatusSummary>> createStatusType(@Valid @RequestBody StatusTypeRequest request) {
+        StatusType statusType = StatusType.builder()
+                .name(request.resolvedName())
+                .color(request.resolvedColor())
+                .type(request.resolvedType())
+                .description(request.getDescription())
+                .isDefault(request.isDefault())
+                .orderIndex(request.getOrderIndex())
+                .build();
+        return ResponseEntity.ok(ApiResponse.created(classificationMapper.toDefectStatusSummary(statusTypeRepository.save(statusType)), "Status type created successfully"));
     }
 
     @PutMapping("/status-type/{id}")
     @PreAuthorize("@access.has('STATUS_TYPE_UPDATE')")
-    public ResponseEntity<ApiResponse<StatusType>> updateStatusType(@PathVariable Long id, @RequestBody StatusType req) {
+    public ResponseEntity<ApiResponse<DefectStatusSummary>> updateStatusType(@PathVariable Long id, @Valid @RequestBody StatusTypeRequest req) {
         StatusType st = statusTypeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("StatusType", "id", id));
-        if (req.getName() != null) {
-            st.setName(req.getName());
-        } else if (req.getDefectStatusName() != null) {
-            st.setName(req.getDefectStatusName());
-        } else if (req.getStatusName() != null) {
-            st.setName(req.getStatusName());
+        String resolvedName = req.resolvedName();
+        if (resolvedName != null) {
+            st.setName(resolvedName);
         }
-
-        if (req.getColor() != null) {
-            st.setColor(req.getColor());
-        } else if (req.getColorCode() != null) {
-            st.setColor(req.getColorCode());
+        String resolvedColor = req.resolvedColor();
+        if (resolvedColor != null) {
+            st.setColor(resolvedColor);
         }
-
         if (req.getDescription() != null) {
             st.setDescription(req.getDescription());
         }
         st.setDefault(req.isDefault());
         st.setOrderIndex(req.getOrderIndex());
-
-        if (req.getType() != null) {
-            st.setType(req.getType());
-        } else if (req.getStatusType() != null) {
-            st.setType(req.getStatusType());
+        String resolvedType = req.resolvedType();
+        if (resolvedType != null) {
+            st.setType(resolvedType);
         }
-
-        return ResponseEntity.ok(ApiResponse.success(statusTypeRepository.save(st), "Status type updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toDefectStatusSummary(statusTypeRepository.save(st)), "Status type updated successfully"));
     }
 
     @DeleteMapping("/status-type/{id}")
@@ -321,19 +346,19 @@ public class ClassificationController {
     @GetMapping("/status/{id}/next")
     @PreAuthorize("@access.has('WORKFLOW_READ')")
     @Operation(summary = "Get valid next statuses for a status ID in the workflow")
-    public ResponseEntity<ApiResponse<List<StatusType>>> getNextStatuses(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<List<DefectStatusSummary>>> getNextStatuses(@PathVariable Long id) {
         List<StatusTransition> transitions = statusTransitionRepository.findByFromStatusId(id);
         List<StatusType> nextStatuses = transitions.stream().map(StatusTransition::getToStatus).collect(Collectors.toList());
         if (nextStatuses.isEmpty()) {
             nextStatuses = statusTypeRepository.findAll();
         }
-        return ResponseEntity.ok(ApiResponse.success(nextStatuses, "Next statuses retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toDefectStatusSummaryList(nextStatuses), "Next statuses retrieved"));
     }
 
     @GetMapping("/status/workflow")
     @PreAuthorize("@access.has('WORKFLOW_READ')")
     @Operation(summary = "Get all workflow status transitions with canvas positions")
-    public ResponseEntity<ApiResponse<List<StatusTransition>>> getWorkflow() {
+    public ResponseEntity<ApiResponse<List<StatusTransitionResponse>>> getWorkflow() {
         List<StatusTransition> list = statusTransitionRepository.findAll();
         Map<Long, WorkflowPosition> positions = workflowPositionRepository.findAll().stream()
                 .filter(p -> p.getProject() == null && p.getStatusType() != null)
@@ -351,14 +376,14 @@ public class ClassificationController {
                 t.getToStatus().setPositionY(pos.getPositionY());
             }
         }
-        return ResponseEntity.ok(ApiResponse.success(list, "Workflow retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toStatusTransitionResponseList(list), "Workflow retrieved"));
     }
 
     @PostMapping("/status/workflow")
     @PreAuthorize("@access.has('WORKFLOW_CREATE') or @access.has('WORKFLOW_UPDATE')")
     @Operation(summary = "Save workflow status transitions and canvas positions")
     @org.springframework.transaction.annotation.Transactional
-    public ResponseEntity<ApiResponse<Object>> saveWorkflow(@RequestBody WorkflowSaveRequest req) {
+    public ResponseEntity<ApiResponse<List<StatusTransitionResponse>>> saveWorkflow(@Valid @RequestBody WorkflowSaveRequest req) {
         if (req == null) {
             return ResponseEntity.badRequest().body(ApiResponse.error(400, "Request body cannot be null"));
         }
@@ -401,7 +426,6 @@ public class ClassificationController {
             }
         }
 
-        return ResponseEntity.ok(ApiResponse.success(savedTransitions, "Workflow saved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(classificationMapper.toStatusTransitionResponseList(savedTransitions), "Workflow saved successfully"));
     }
 }
-

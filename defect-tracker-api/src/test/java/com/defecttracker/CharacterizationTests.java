@@ -96,7 +96,6 @@ class CharacterizationTests extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("R6")
     @DisplayName("B08: Defect creation with non-existent projectId must be rejected, not silently attached to an existing project")
     void B08_defectWithUnknownProjectIsRejectedEvenWhenProjectsExist() throws Exception {
         String adminToken = obtainAdminToken();

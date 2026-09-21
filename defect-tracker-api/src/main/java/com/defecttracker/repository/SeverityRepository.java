@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface SeverityRepository extends JpaRepository<Severity, Long> {
     Optional<Severity> findByName(String name);
+    Optional<Severity> findTopByOrderByWeightAscIdAsc();
+    Optional<Severity> findTopByOrderByIdAsc();
 }

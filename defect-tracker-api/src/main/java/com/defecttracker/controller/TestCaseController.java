@@ -3,7 +3,9 @@ package com.defecttracker.controller;
 import com.defecttracker.dto.request.TestCaseCreateRequest;
 import com.defecttracker.dto.response.ApiResponse;
 import com.defecttracker.dto.response.PaginatedResponse;
+import com.defecttracker.dto.response.TestCaseSummary;
 import com.defecttracker.entity.TestCase;
+import com.defecttracker.mapper.TestCaseMapper;
 import com.defecttracker.service.TestCaseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,22 +24,23 @@ import java.util.List;
 public class TestCaseController {
 
     private final TestCaseService testCaseService;
+    private final TestCaseMapper testCaseMapper;
 
     @PostMapping("/sub-module/{subModuleId}/test-case")
     @PreAuthorize("@access.hasSubModuleAccess('TEST_CASE_CREATE', #subModuleId)")
     @Operation(summary = "Create test case for a submodule")
-    public ResponseEntity<ApiResponse<TestCase>> createTestCase(
+    public ResponseEntity<ApiResponse<TestCaseSummary>> createTestCase(
             @PathVariable Long subModuleId,
             @Valid @RequestBody TestCaseCreateRequest request
     ) {
         TestCase testCase = testCaseService.createTestCase(subModuleId, request);
-        return ResponseEntity.ok(ApiResponse.created(testCase, "Test case created successfully"));
+        return ResponseEntity.ok(ApiResponse.created(testCaseMapper.toTestCaseSummary(testCase), "Test case created successfully"));
     }
 
     @GetMapping("/sub-module/{subModuleId}/test-case")
     @PreAuthorize("@access.hasSubModuleAccess('TEST_CASE_READ', #subModuleId)")
     @Operation(summary = "Get test cases for a submodule with optional filters & pagination")
-    public ResponseEntity<ApiResponse<PaginatedResponse<TestCase>>> getTestCasesBySubModule(
+    public ResponseEntity<ApiResponse<PaginatedResponse<TestCaseSummary>>> getTestCasesBySubModule(
             @PathVariable Long subModuleId,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) Long defectTypeId,
@@ -45,14 +48,21 @@ public class TestCaseController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        PaginatedResponse<TestCase> p = testCaseService.getTestCasesBySubModule(subModuleId, description, defectTypeId, severityId, page, size);
+        PaginatedResponse<TestCase> entityPage = testCaseService.getTestCasesBySubModule(subModuleId, description, defectTypeId, severityId, page, size);
+        PaginatedResponse<TestCaseSummary> p = PaginatedResponse.<TestCaseSummary>builder()
+                .content(testCaseMapper.toTestCaseSummaryList(entityPage.getContent()))
+                .pageNumber(entityPage.getPageNumber())
+                .pageSize(entityPage.getPageSize())
+                .totalElements(entityPage.getTotalElements())
+                .totalPages(entityPage.getTotalPages())
+                .build();
         return ResponseEntity.ok(ApiResponse.success(p, "Test cases retrieved"));
     }
 
     @GetMapping("/module/{moduleId}/test-cases")
     @PreAuthorize("@access.hasModuleAccess('TEST_CASE_READ', #moduleId)")
     @Operation(summary = "Get test cases for a module with optional filters & pagination")
-    public ResponseEntity<ApiResponse<PaginatedResponse<TestCase>>> getTestCasesByModule(
+    public ResponseEntity<ApiResponse<PaginatedResponse<TestCaseSummary>>> getTestCasesByModule(
             @PathVariable Long moduleId,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) Long defectTypeId,
@@ -60,14 +70,21 @@ public class TestCaseController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "1000") int size
     ) {
-        PaginatedResponse<TestCase> p = testCaseService.getTestCasesByModule(moduleId, description, defectTypeId, severityId, page, size);
+        PaginatedResponse<TestCase> entityPage = testCaseService.getTestCasesByModule(moduleId, description, defectTypeId, severityId, page, size);
+        PaginatedResponse<TestCaseSummary> p = PaginatedResponse.<TestCaseSummary>builder()
+                .content(testCaseMapper.toTestCaseSummaryList(entityPage.getContent()))
+                .pageNumber(entityPage.getPageNumber())
+                .pageSize(entityPage.getPageSize())
+                .totalElements(entityPage.getTotalElements())
+                .totalPages(entityPage.getTotalPages())
+                .build();
         return ResponseEntity.ok(ApiResponse.success(p, "Test cases retrieved"));
     }
 
     @GetMapping("/project/{projectId}/test-cases")
     @PreAuthorize("@access.hasProjectAccess('TEST_CASE_READ', #projectId)")
     @Operation(summary = "Get test cases for a project with optional filters & pagination")
-    public ResponseEntity<ApiResponse<PaginatedResponse<TestCase>>> getTestCasesByProject(
+    public ResponseEntity<ApiResponse<PaginatedResponse<TestCaseSummary>>> getTestCasesByProject(
             @PathVariable Long projectId,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) Long defectTypeId,
@@ -75,31 +92,38 @@ public class TestCaseController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "1000") int size
     ) {
-        PaginatedResponse<TestCase> p = testCaseService.getTestCasesByProject(projectId, description, defectTypeId, severityId, page, size);
+        PaginatedResponse<TestCase> entityPage = testCaseService.getTestCasesByProject(projectId, description, defectTypeId, severityId, page, size);
+        PaginatedResponse<TestCaseSummary> p = PaginatedResponse.<TestCaseSummary>builder()
+                .content(testCaseMapper.toTestCaseSummaryList(entityPage.getContent()))
+                .pageNumber(entityPage.getPageNumber())
+                .pageSize(entityPage.getPageSize())
+                .totalElements(entityPage.getTotalElements())
+                .totalPages(entityPage.getTotalPages())
+                .build();
         return ResponseEntity.ok(ApiResponse.success(p, "Test cases retrieved"));
     }
 
     @GetMapping("/sub-module/{subModuleId}/test-case/{id}")
     @PreAuthorize("@access.hasSubModuleAccess('TEST_CASE_READ', #subModuleId)")
     @Operation(summary = "Get test case by ID")
-    public ResponseEntity<ApiResponse<TestCase>> getTestCaseById(
+    public ResponseEntity<ApiResponse<TestCaseSummary>> getTestCaseById(
             @PathVariable Long subModuleId,
             @PathVariable Long id
     ) {
         TestCase testCase = testCaseService.getTestCaseById(id);
-        return ResponseEntity.ok(ApiResponse.success(testCase, "Test case found"));
+        return ResponseEntity.ok(ApiResponse.success(testCaseMapper.toTestCaseSummary(testCase), "Test case found"));
     }
 
     @PutMapping("/sub-module/{subModuleId}/test-case/{id}")
     @PreAuthorize("@access.hasSubModuleAccess('TEST_CASE_UPDATE', #subModuleId)")
     @Operation(summary = "Update test case")
-    public ResponseEntity<ApiResponse<TestCase>> updateTestCase(
+    public ResponseEntity<ApiResponse<TestCaseSummary>> updateTestCase(
             @PathVariable Long subModuleId,
             @PathVariable Long id,
             @Valid @RequestBody TestCaseCreateRequest request
     ) {
         TestCase testCase = testCaseService.updateTestCase(subModuleId, id, request);
-        return ResponseEntity.ok(ApiResponse.success(testCase, "Test case updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(testCaseMapper.toTestCaseSummary(testCase), "Test case updated successfully"));
     }
 
     @DeleteMapping("/sub-module/{subModuleId}/test-case/{id}")
@@ -116,38 +140,38 @@ public class TestCaseController {
     @GetMapping("/test-case")
     @PreAuthorize("@access.has('TEST_CASE_READ')")
     @Operation(summary = "Get all test cases in the system")
-    public ResponseEntity<ApiResponse<List<TestCase>>> getAllTestCases() {
+    public ResponseEntity<ApiResponse<List<TestCaseSummary>>> getAllTestCases() {
         List<TestCase> list = testCaseService.getAllTestCases();
-        return ResponseEntity.ok(ApiResponse.success(list, "All test cases retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(testCaseMapper.toTestCaseSummaryList(list), "All test cases retrieved"));
     }
 
     @PostMapping("/sub-module/{subModuleId}/test-case/bulk")
     @PreAuthorize("@access.hasSubModuleAccess('TEST_CASE_CREATE', #subModuleId)")
     @Operation(summary = "Create test cases in bulk for a submodule")
-    public ResponseEntity<ApiResponse<List<TestCase>>> createSubModuleBulkTestCases(
+    public ResponseEntity<ApiResponse<List<TestCaseSummary>>> createSubModuleBulkTestCases(
             @PathVariable Long subModuleId,
-            @RequestBody List<TestCaseCreateRequest> requests
+            @Valid @RequestBody List<TestCaseCreateRequest> requests
     ) {
         requests.forEach(r -> r.setSubModuleId(subModuleId));
         List<TestCase> created = testCaseService.createBulkTestCases(requests);
-        return ResponseEntity.ok(ApiResponse.created(created, "Bulk test cases created successfully"));
+        return ResponseEntity.ok(ApiResponse.created(testCaseMapper.toTestCaseSummaryList(created), "Bulk test cases created successfully"));
     }
 
     @PostMapping("/test-case/bulk")
     @PreAuthorize("@access.has('TEST_CASE_CREATE')")
     @Operation(summary = "Create test cases in bulk globally")
-    public ResponseEntity<ApiResponse<List<TestCase>>> createBulkTestCases(
-            @RequestBody List<TestCaseCreateRequest> requests
+    public ResponseEntity<ApiResponse<List<TestCaseSummary>>> createBulkTestCases(
+            @Valid @RequestBody List<TestCaseCreateRequest> requests
     ) {
         List<TestCase> created = testCaseService.createBulkTestCases(requests);
-        return ResponseEntity.ok(ApiResponse.created(created, "Bulk test cases created successfully"));
+        return ResponseEntity.ok(ApiResponse.created(testCaseMapper.toTestCaseSummaryList(created), "Bulk test cases created successfully"));
     }
 
     @GetMapping("/test-case/bulk")
     @PreAuthorize("@access.has('TEST_CASE_READ')")
     @Operation(summary = "Export bulk test cases")
-    public ResponseEntity<ApiResponse<List<TestCase>>> exportBulkTestCases() {
+    public ResponseEntity<ApiResponse<List<TestCaseSummary>>> exportBulkTestCases() {
         List<TestCase> list = testCaseService.getAllTestCases();
-        return ResponseEntity.ok(ApiResponse.success(list, "Test cases exported"));
+        return ResponseEntity.ok(ApiResponse.success(testCaseMapper.toTestCaseSummaryList(list), "Test cases exported"));
     }
 }

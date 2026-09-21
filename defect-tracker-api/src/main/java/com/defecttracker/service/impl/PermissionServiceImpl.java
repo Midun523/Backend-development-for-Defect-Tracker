@@ -17,7 +17,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class PermissionServiceImpl implements PermissionService {
 

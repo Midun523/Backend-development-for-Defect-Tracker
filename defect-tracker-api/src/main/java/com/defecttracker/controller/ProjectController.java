@@ -92,7 +92,7 @@ public class ProjectController {
     @Operation(summary = "Update KLOC metric for project")
     public ResponseEntity<ApiResponse<ProjectResponse>> updateProjectKloc(
             @PathVariable Long projectId,
-            @RequestBody Map<String, Double> body
+            @Valid @RequestBody Map<String, Double> body
     ) {
         Double kloc = body.getOrDefault("kloc", 0.0);
         Project project = projectService.updateKloc(projectId, kloc);

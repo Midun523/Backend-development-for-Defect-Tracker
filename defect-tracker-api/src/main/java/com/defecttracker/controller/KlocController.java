@@ -44,7 +44,7 @@ public class KlocController {
     @Operation(summary = "Save or update KLOC metrics for a project")
     public ResponseEntity<ApiResponse<KlocMetricResponse>> saveProjectKloc(
             @PathVariable Long projectId,
-            @RequestBody com.defecttracker.dto.request.KlocMetricRequest request
+            @jakarta.validation.Valid @RequestBody com.defecttracker.dto.request.KlocMetricRequest request
     ) {
         Project project = projectRepo.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", "id", projectId));

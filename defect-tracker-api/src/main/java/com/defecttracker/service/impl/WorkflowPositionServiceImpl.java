@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class WorkflowPositionServiceImpl implements WorkflowPositionService {
 
@@ -33,7 +34,8 @@ public class WorkflowPositionServiceImpl implements WorkflowPositionService {
 
         Project project = null;
         if (request.getProjectId() != null) {
-            project = projectRepository.findById(request.getProjectId()).orElse(null);
+            project = projectRepository.findById(request.getProjectId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Project", "id", request.getProjectId()));
         }
 
         Optional<WorkflowPosition> existingOpt;

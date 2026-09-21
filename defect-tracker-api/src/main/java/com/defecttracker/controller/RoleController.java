@@ -116,7 +116,7 @@ public class RoleController {
     @PostMapping("/assign-permission/matrix")
     @PreAuthorize("@access.has('ROLE_PERMISSION_ASSIGN')")
     @Operation(summary = "Assign permissions to role")
-    public ResponseEntity<ApiResponse<Void>> assignPermissions(@RequestBody RolePermissionAssignRequest request) {
+    public ResponseEntity<ApiResponse<Void>> assignPermissions(@Valid @RequestBody RolePermissionAssignRequest request) {
         roleService.assignPermissionsToRole(request);
         return ResponseEntity.ok(ApiResponse.success(null, "Permissions assigned to role successfully"));
     }

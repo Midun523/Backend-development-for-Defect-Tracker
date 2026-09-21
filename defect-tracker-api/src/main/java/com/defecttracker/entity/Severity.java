@@ -24,4 +24,8 @@ public class Severity {
 
     @Column(length = 255)
     private String description;
+
+    @Column
+    @Builder.Default
+    private Integer weight = 1;
 }

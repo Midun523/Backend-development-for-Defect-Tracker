@@ -4,11 +4,13 @@ import com.defecttracker.dto.request.ProjectAllocationRequest;
 import com.defecttracker.entity.Employee;
 import com.defecttracker.entity.Project;
 import com.defecttracker.entity.ProjectAllocation;
+import com.defecttracker.entity.Role;
 import com.defecttracker.exception.BadRequestException;
 import com.defecttracker.exception.ResourceNotFoundException;
 import com.defecttracker.repository.EmployeeRepository;
 import com.defecttracker.repository.ProjectAllocationRepository;
 import com.defecttracker.repository.ProjectRepository;
+import com.defecttracker.repository.RoleRepository;
 import com.defecttracker.service.ProjectAllocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,13 +21,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class ProjectAllocationServiceImpl implements ProjectAllocationService {
 
     private final ProjectAllocationRepository projectAllocationRepository;
     private final ProjectRepository projectRepository;
     private final EmployeeRepository employeeRepository;
-    private final com.defecttracker.repository.RoleRepository roleRepository;
+    private final RoleRepository roleRepository;
 
     @Override
     @Transactional
@@ -43,11 +46,13 @@ public class ProjectAllocationServiceImpl implements ProjectAllocationService {
         String resolvedRole = request.getRole();
         if ((resolvedRole == null || resolvedRole.isBlank()) && request.getRoleId() != null) {
             resolvedRole = roleRepository.findById(request.getRoleId())
-                    .map(com.defecttracker.entity.Role::getRoleName)
-                    .orElse("Developer");
+                    .map(Role::getRoleName)
+                    .orElse(null);
         }
         if (resolvedRole == null || resolvedRole.isBlank()) {
-            resolvedRole = "Developer";
+            resolvedRole = roleRepository.findTopByOrderByIdAsc()
+                    .map(Role::getRoleName)
+                    .orElse("Role");
         }
 
         ProjectAllocation allocation = ProjectAllocation.builder()
@@ -110,7 +115,7 @@ public class ProjectAllocationServiceImpl implements ProjectAllocationService {
         String role = request.getRole();
         if ((role == null || role.isBlank()) && request.getRoleId() != null) {
             role = roleRepository.findById(request.getRoleId())
-                    .map(com.defecttracker.entity.Role::getRoleName)
+                    .map(Role::getRoleName)
                     .orElse(null);
         }
         if (role != null && !role.isBlank()) {
@@ -134,27 +139,32 @@ public class ProjectAllocationServiceImpl implements ProjectAllocationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProjectAllocation> getAllocationsByProject(Long projectId) {
         return projectAllocationRepository.findByProjectIdAndStatus(projectId, "ACTIVE");
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Employee> getEmployeesByProject(Long projectId) {
         List<ProjectAllocation> activeAllocations = projectAllocationRepository.findByProjectIdAndStatus(projectId, "ACTIVE");
         return activeAllocations.stream().map(ProjectAllocation::getEmployee).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProjectAllocation> getEmployeeAllocationHistory(Long projectId) {
         return projectAllocationRepository.findByProjectId(projectId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProjectAllocation> getAllocationsByEmployee(Long employeeId) {
         return projectAllocationRepository.findByEmployeeId(employeeId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProjectAllocation> getAllocations() {
         return projectAllocationRepository.findAll();
     }

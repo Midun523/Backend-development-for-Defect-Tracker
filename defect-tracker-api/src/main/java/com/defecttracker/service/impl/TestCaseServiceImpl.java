@@ -5,10 +5,11 @@ import com.defecttracker.dto.response.PaginatedResponse;
 import com.defecttracker.entity.*;
 import com.defecttracker.exception.ResourceNotFoundException;
 import com.defecttracker.repository.*;
+import com.defecttracker.service.ProjectSequenceService;
 import com.defecttracker.service.TestCaseService;
+import com.defecttracker.util.PageableUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class TestCaseServiceImpl implements TestCaseService {
 
@@ -26,6 +28,7 @@ public class TestCaseServiceImpl implements TestCaseService {
     private final SeverityRepository severityRepository;
     private final DefectTypeRepository defectTypeRepository;
     private final EmployeeRepository employeeRepository;
+    private final ProjectSequenceService projectSequenceService;
 
     @Override
     @Transactional
@@ -36,23 +39,33 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         Severity severity = null;
         if (request.getSeverityId() != null) {
-            severity = severityRepository.findById(request.getSeverityId()).orElse(null);
+            severity = severityRepository.findById(request.getSeverityId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Severity", "id", request.getSeverityId()));
+        } else {
+            severity = severityRepository.findTopByOrderByWeightAscIdAsc()
+                    .or(severityRepository::findTopByOrderByIdAsc)
+                    .orElse(null);
         }
 
         DefectType defectType = null;
         if (request.getDefectTypeId() != null) {
-            defectType = defectTypeRepository.findById(request.getDefectTypeId()).orElse(null);
+            defectType = defectTypeRepository.findById(request.getDefectTypeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("DefectType", "id", request.getDefectTypeId()));
         }
 
         Employee qa = null;
         if (request.getAssignedQaId() != null) {
-            qa = employeeRepository.findById(request.getAssignedQaId()).orElse(null);
+            qa = employeeRepository.findById(request.getAssignedQaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", request.getAssignedQaId()));
         }
 
-        long count = testCaseRepository.count() + 1;
+        Long projectId = (subModule.getModule() != null && subModule.getModule().getProject() != null)
+                ? subModule.getModule().getProject().getId()
+                : null;
+
         String testcaseNo = (request.getTestcaseNo() != null && !request.getTestcaseNo().trim().isEmpty())
                 ? request.getTestcaseNo()
-                : String.format("TC%03d", count);
+                : (projectId != null ? projectSequenceService.getNextTestCaseNumber(projectId) : "TC001");
 
         TestCase testCase = TestCase.builder()
                 .testcaseNo(testcaseNo)
@@ -80,27 +93,35 @@ public class TestCaseServiceImpl implements TestCaseService {
         if (request.getExpectedResult() != null) testCase.setExpectedResult(request.getExpectedResult());
 
         if (request.getSeverityId() != null) {
-            severityRepository.findById(request.getSeverityId()).ifPresent(testCase::setSeverity);
+            Severity severity = severityRepository.findById(request.getSeverityId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Severity", "id", request.getSeverityId()));
+            testCase.setSeverity(severity);
         }
         if (request.getDefectTypeId() != null) {
-            defectTypeRepository.findById(request.getDefectTypeId()).ifPresent(testCase::setDefectType);
+            DefectType defectType = defectTypeRepository.findById(request.getDefectTypeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("DefectType", "id", request.getDefectTypeId()));
+            testCase.setDefectType(defectType);
         }
         if (request.getAssignedQaId() != null) {
-            employeeRepository.findById(request.getAssignedQaId()).ifPresent(testCase::setAssignedQa);
+            Employee employee = employeeRepository.findById(request.getAssignedQaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", request.getAssignedQaId()));
+            testCase.setAssignedQa(employee);
         }
 
         return testCaseRepository.save(testCase);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TestCase getTestCaseById(Long id) {
         return testCaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("TestCase", "id", id));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PaginatedResponse<TestCase> getTestCasesBySubModule(Long subModuleId, String description, Long defectTypeId, Long severityId, int page, int size) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
+        Pageable pageable = PageableUtils.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
         String search = (description != null && !description.trim().isEmpty()) ? "%" + description.trim().toLowerCase() + "%" : null;
 
         Page<TestCase> testCasePage;
@@ -122,8 +143,9 @@ public class TestCaseServiceImpl implements TestCaseService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PaginatedResponse<TestCase> getTestCasesByModule(Long moduleId, String description, Long defectTypeId, Long severityId, int page, int size) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
+        Pageable pageable = PageableUtils.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
         String search = (description != null && !description.trim().isEmpty()) ? "%" + description.trim().toLowerCase() + "%" : null;
 
         Page<TestCase> testCasePage;
@@ -145,8 +167,9 @@ public class TestCaseServiceImpl implements TestCaseService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PaginatedResponse<TestCase> getTestCasesByProject(Long projectId, String description, Long defectTypeId, Long severityId, int page, int size) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
+        Pageable pageable = PageableUtils.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
         String search = (description != null && !description.trim().isEmpty()) ? "%" + description.trim().toLowerCase() + "%" : null;
 
         Page<TestCase> testCasePage;
@@ -168,6 +191,7 @@ public class TestCaseServiceImpl implements TestCaseService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TestCase> getAllTestCases() {
         return testCaseRepository.findAll();
     }
@@ -185,6 +209,7 @@ public class TestCaseServiceImpl implements TestCaseService {
     }
 
     @Override
+    @Transactional
     public void deleteTestCase(Long id) {
         TestCase tc = getTestCaseById(id);
         testCaseRepository.delete(tc);

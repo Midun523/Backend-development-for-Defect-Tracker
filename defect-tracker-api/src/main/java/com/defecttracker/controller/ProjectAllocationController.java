@@ -33,7 +33,7 @@ public class ProjectAllocationController {
     @PostMapping("/project-allocation")
     @PreAuthorize("@access.hasProjectAccess('BENCH_ALLOCATE', #request.projectId)")
     @Operation(summary = "Allocate employee to project")
-    public ResponseEntity<ApiResponse<ProjectAllocationResponse>> allocateEmployee(@RequestBody ProjectAllocationRequest request) {
+    public ResponseEntity<ApiResponse<ProjectAllocationResponse>> allocateEmployee(@jakarta.validation.Valid @RequestBody ProjectAllocationRequest request) {
         ProjectAllocation allocation = projectAllocationService.allocateEmployee(request);
         return ResponseEntity.ok(ApiResponse.created(projectAllocationMapper.toResponse(allocation), "Employee allocated successfully"));
     }
@@ -59,7 +59,7 @@ public class ProjectAllocationController {
     @Operation(summary = "Update project allocation")
     public ResponseEntity<ApiResponse<ProjectAllocationResponse>> updateProjectAllocation(
             @PathVariable Long id,
-            @RequestBody ProjectAllocationRequest request
+            @jakarta.validation.Valid @RequestBody ProjectAllocationRequest request
     ) {
         ProjectAllocation updated = projectAllocationService.updateAllocation(id, request);
         return ResponseEntity.ok(ApiResponse.success(projectAllocationMapper.toResponse(updated), "Project allocation updated successfully"));
@@ -110,7 +110,7 @@ public class ProjectAllocationController {
     @Operation(summary = "Extend employee project allocation end date")
     public ResponseEntity<ApiResponse<ProjectAllocationResponse>> extendAllocation(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body
+            @jakarta.validation.Valid @RequestBody Map<String, String> body
     ) {
         LocalDate newEndDate = LocalDate.parse(body.get("endDate"));
         ProjectAllocation allocation = projectAllocationService.extendAllocation(id, newEndDate);

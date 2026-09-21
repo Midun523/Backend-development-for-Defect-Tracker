@@ -22,7 +22,7 @@ public class WhatsAppController {
     @PostMapping("/send")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Send a WhatsApp notification message")
-    public ResponseEntity<ApiResponse<Boolean>> sendMessage(@RequestBody Map<String, String> body) {
+    public ResponseEntity<ApiResponse<Boolean>> sendMessage(@jakarta.validation.Valid @RequestBody Map<String, String> body) {
         String phone = body.get("phone");
         String message = body.get("message");
         boolean sent = whatsAppBridgeService.sendMessage(phone, message);
@@ -39,7 +39,7 @@ public class WhatsAppController {
 
     @PostMapping("/webhook")
     @Operation(summary = "Receive webhook events from WhatsApp server")
-    public ResponseEntity<ApiResponse<String>> handleWebhook(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<ApiResponse<String>> handleWebhook(@jakarta.validation.Valid @RequestBody Map<String, Object> payload) {
         whatsAppBridgeService.processWebhook(payload);
         return ResponseEntity.ok(ApiResponse.success("Webhook processed", "Event acknowledged"));
     }

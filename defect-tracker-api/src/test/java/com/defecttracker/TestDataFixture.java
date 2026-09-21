@@ -226,7 +226,7 @@ public class TestDataFixture {
                         .build()));
 
         // 4. Project
-        Project project = projectRepository.findAll().stream().findFirst()
+        Project project = projectRepository.findByProjectId("PRJ_FIXTURE_1")
                 .orElseGet(() -> projectRepository.save(Project.builder()
                         .name("Fixture Core Project")
                         .projectId("PRJ_FIXTURE_1")
@@ -236,7 +236,7 @@ public class TestDataFixture {
                         .build()));
 
         // 5. Module & SubModule
-        Module module = moduleRepository.findAll().stream().findFirst()
+        Module module = moduleRepository.findByProjectId(project.getId()).stream().findFirst()
                 .orElseGet(() -> moduleRepository.save(Module.builder()
                         .name("Fixture Core Module")
                         .description("Module for fixture tests")
@@ -244,7 +244,7 @@ public class TestDataFixture {
                         .leader(mgrEmployee)
                         .build()));
 
-        SubModule subModule = subModuleRepository.findAll().stream().findFirst()
+        SubModule subModule = subModuleRepository.findByModuleId(module.getId()).stream().findFirst()
                 .orElseGet(() -> subModuleRepository.save(SubModule.builder()
                         .name("Fixture Core SubModule")
                         .description("SubModule for fixture tests")
@@ -264,7 +264,7 @@ public class TestDataFixture {
                 .orElseGet(() -> releaseTypeRepository.save(ReleaseType.builder().name("Major").build()));
 
         // 7. TestCase
-        TestCase testCase = testCaseRepository.findAll().stream().findFirst()
+        TestCase testCase = testCaseRepository.findBySubModuleId(subModule.getId()).stream().findFirst()
                 .orElseGet(() -> testCaseRepository.save(TestCase.builder()
                         .testcaseNo("TC_FIXTURE_1")
                         .description("Verify basic workflow")
@@ -277,7 +277,7 @@ public class TestDataFixture {
                         .build()));
 
         // 8. Release
-        Release release = releaseRepository.findAll().stream().findFirst()
+        Release release = releaseRepository.findByProjectId(project.getId()).stream().findFirst()
                 .orElseGet(() -> releaseRepository.save(Release.builder()
                         .releaseNo("REL_FIXTURE_1")
                         .name("Release 1.0 Fixture")
@@ -288,7 +288,7 @@ public class TestDataFixture {
                         .build()));
 
         // 9. Project Allocation
-        ProjectAllocation projectAllocation = projectAllocationRepository.findAll().stream().findFirst()
+        ProjectAllocation projectAllocation = projectAllocationRepository.findByProjectId(project.getId()).stream().findFirst()
                 .orElseGet(() -> projectAllocationRepository.save(ProjectAllocation.builder()
                         .project(project)
                         .employee(devEmployee)
@@ -298,7 +298,7 @@ public class TestDataFixture {
                         .build()));
 
         // 10. Defect
-        Defect defect = defectRepository.findAll().stream().findFirst()
+        Defect defect = defectRepository.findByProjectId(project.getId()).stream().findFirst()
                 .orElseGet(() -> defectRepository.save(Defect.builder()
                         .defectId("DEF_FIXTURE_1")
                         .title("Fixture UI Rendering Defect")
@@ -317,7 +317,7 @@ public class TestDataFixture {
                         .build()));
 
         // 11. ReleaseTestCase with linked defect
-        ReleaseTestCase releaseTestCase = releaseTestCaseRepository.findAll().stream().findFirst()
+        ReleaseTestCase releaseTestCase = releaseTestCaseRepository.findByReleaseId(release.getId()).stream().findFirst()
                 .orElseGet(() -> releaseTestCaseRepository.save(ReleaseTestCase.builder()
                         .release(release)
                         .testCase(testCase)

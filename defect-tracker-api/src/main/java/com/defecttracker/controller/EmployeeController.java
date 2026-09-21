@@ -88,7 +88,7 @@ public class EmployeeController {
     @Operation(summary = "Update employee status")
     public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployeeStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> statusBody
+            @Valid @RequestBody Map<String, String> statusBody
     ) {
         String status = statusBody.getOrDefault("status", "active");
         Employee employee = employeeService.updateEmployeeStatus(id, status);

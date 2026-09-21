@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface PriorityRepository extends JpaRepository<Priority, Long> {
     Optional<Priority> findByName(String name);
+    Optional<Priority> findTopByOrderByIdAsc();
 }

@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface StatusTypeRepository extends JpaRepository<StatusType, Long> {
     Optional<StatusType> findByName(String name);
     Optional<StatusType> findByNameIgnoreCase(String name);
+    Optional<StatusType> findFirstByIsDefaultTrue();
+    Optional<StatusType> findTopByOrderByIdAsc();
 }

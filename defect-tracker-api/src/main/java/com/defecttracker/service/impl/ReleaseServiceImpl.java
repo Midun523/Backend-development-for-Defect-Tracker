@@ -5,6 +5,7 @@ import com.defecttracker.entity.*;
 import com.defecttracker.exception.BadRequestException;
 import com.defecttracker.exception.ResourceNotFoundException;
 import com.defecttracker.repository.*;
+import com.defecttracker.service.ProjectSequenceService;
 import com.defecttracker.service.ReleaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class ReleaseServiceImpl implements ReleaseService {
 
@@ -30,6 +32,7 @@ public class ReleaseServiceImpl implements ReleaseService {
     private final DefectRepository defectRepository;
     private final PriorityRepository priorityRepository;
     private final StatusTypeRepository statusTypeRepository;
+    private final ProjectSequenceService projectSequenceService;
 
     @Override
     @Transactional
@@ -43,11 +46,11 @@ public class ReleaseServiceImpl implements ReleaseService {
 
         ReleaseType releaseType = null;
         if (request.getReleaseTypeId() != null) {
-            releaseType = releaseTypeRepository.findById(request.getReleaseTypeId()).orElse(null);
+            releaseType = releaseTypeRepository.findById(request.getReleaseTypeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("ReleaseType", "id", request.getReleaseTypeId()));
         }
 
-        long count = releaseRepository.count() + 1;
-        String releaseNo = String.format("REL%03d", count);
+        String releaseNo = projectSequenceService.getNextReleaseNumber(project.getId());
 
         Release release = Release.builder()
                 .releaseNo(releaseNo)
@@ -68,14 +71,14 @@ public class ReleaseServiceImpl implements ReleaseService {
         if (request.getTestCases() != null) {
             for (Long tcId : request.getTestCases()) {
                 if (tcId != null) {
-                    testCaseRepository.findById(tcId).ifPresent(tc -> {
-                        ReleaseTestCase rtc = ReleaseTestCase.builder()
-                                .release(saved)
-                                .testCase(tc)
-                                .executionStatus("NOT_RUN")
-                                .build();
-                        releaseTestCaseRepository.save(rtc);
-                    });
+                    TestCase tc = testCaseRepository.findById(tcId)
+                            .orElseThrow(() -> new ResourceNotFoundException("TestCase", "id", tcId));
+                    ReleaseTestCase rtc = ReleaseTestCase.builder()
+                            .release(saved)
+                            .testCase(tc)
+                            .executionStatus("NOT_RUN")
+                            .build();
+                    releaseTestCaseRepository.save(rtc);
                 }
             }
         }
@@ -97,13 +100,16 @@ public class ReleaseServiceImpl implements ReleaseService {
         if (request.getKloc() != null) release.setKloc(request.getKloc());
 
         if (request.getReleaseTypeId() != null) {
-            releaseTypeRepository.findById(request.getReleaseTypeId()).ifPresent(release::setReleaseType);
+            ReleaseType rt = releaseTypeRepository.findById(request.getReleaseTypeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("ReleaseType", "id", request.getReleaseTypeId()));
+            release.setReleaseType(rt);
         }
 
         return releaseRepository.save(release);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Release getReleaseById(Long id) {
         if (id == null) {
             throw new BadRequestException("Release ID must not be null");
@@ -113,11 +119,13 @@ public class ReleaseServiceImpl implements ReleaseService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Release> getAllReleases() {
         return releaseRepository.findAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Release> getReleasesByProject(Long projectId) {
         if (projectId == null) {
             return releaseRepository.findAll();
@@ -126,6 +134,7 @@ public class ReleaseServiceImpl implements ReleaseService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Release getActiveReleaseByProject(Long projectId) {
         if (projectId == null) {
             return null;
@@ -140,6 +149,7 @@ public class ReleaseServiceImpl implements ReleaseService {
     }
 
     @Override
+    @Transactional
     public Release updateReleaseStatus(Long releaseId, String status) {
         Release release = getReleaseById(releaseId);
         release.setStatus(status.toUpperCase());
@@ -147,6 +157,7 @@ public class ReleaseServiceImpl implements ReleaseService {
     }
 
     @Override
+    @Transactional
     public Release updateReleaseKloc(Long releaseId, Double kloc) {
         Release release = getReleaseById(releaseId);
         release.setKloc(kloc != null ? kloc : 0.0);
@@ -154,12 +165,14 @@ public class ReleaseServiceImpl implements ReleaseService {
     }
 
     @Override
+    @Transactional
     public void deleteRelease(Long id) {
         Release release = getReleaseById(id);
         releaseRepository.delete(release);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, Object> getReleaseCounts() {
         Map<String, Object> counts = new HashMap<>();
         counts.put("total", releaseRepository.count());
@@ -170,11 +183,13 @@ public class ReleaseServiceImpl implements ReleaseService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ReleaseTestCase> getReleaseTestCases(Long releaseId) {
         return releaseTestCaseRepository.findByReleaseId(releaseId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ReleaseTestCase getReleaseTestCase(Long releaseId, Long testCaseId) {
         return releaseTestCaseRepository.findByReleaseIdAndTestCaseId(releaseId, testCaseId)
                 .orElseThrow(() -> new ResourceNotFoundException("ReleaseTestCase not found for release " + releaseId + " and testcase " + testCaseId));
@@ -257,22 +272,25 @@ public class ReleaseServiceImpl implements ReleaseService {
             if (tc != null && release != null && release.getProject() != null) {
                 Priority priority = null;
                 if (priorityId != null) {
-                    priority = priorityRepository.findById(priorityId).orElse(null);
+                    priority = priorityRepository.findById(priorityId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Priority", "id", priorityId));
                 }
                 if (priority == null) {
-                    priority = priorityRepository.findByName("Medium").orElse(null);
+                    priority = priorityRepository.findTopByOrderByIdAsc()
+                            .orElseThrow(() -> new ResourceNotFoundException("Priority", "default", "none found"));
                 }
 
                 Employee assignedTo = null;
                 if (assignedToId != null) {
-                    assignedTo = employeeRepository.findById(assignedToId).orElse(null);
+                    assignedTo = employeeRepository.findById(assignedToId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", assignedToId));
                 }
 
-                StatusType newStatus = statusTypeRepository.findByName("New")
-                        .orElseGet(() -> statusTypeRepository.findAll().stream().findFirst().orElse(null));
+                StatusType newStatus = statusTypeRepository.findFirstByIsDefaultTrue()
+                        .or(statusTypeRepository::findTopByOrderByIdAsc)
+                        .orElseThrow(() -> new ResourceNotFoundException("StatusType", "default", "none found"));
 
-                long count = defectRepository.count() + 1;
-                String defectId = String.format("DEF%03d", count);
+                String defectId = projectSequenceService.getNextDefectNumber(release.getProject().getId());
 
                 Defect defect = Defect.builder()
                         .defectId(defectId)
@@ -303,6 +321,7 @@ public class ReleaseServiceImpl implements ReleaseService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TestCaseAllocationLog> getTestCaseAllocationLogs() {
         return testCaseAllocationLogRepository.findAll();
     }

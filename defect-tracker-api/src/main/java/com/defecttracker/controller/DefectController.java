@@ -43,7 +43,7 @@ public class DefectController {
     @PostMapping(value = "/defect", consumes = {MediaType.APPLICATION_JSON_VALUE})
     @PreAuthorize("@access.has('DEFECT_CREATE')")
     @Operation(summary = "Create a defect (JSON payload)")
-    public ResponseEntity<ApiResponse<DefectResponse>> createDefect(@RequestBody DefectCreateRequest request) {
+    public ResponseEntity<ApiResponse<DefectResponse>> createDefect(@Valid @RequestBody DefectCreateRequest request) {
         Defect defect = defectService.createDefect(request);
         return ResponseEntity.ok(ApiResponse.created(defectMapper.toResponse(defect), "Defect created successfully"));
     }
@@ -145,7 +145,7 @@ public class DefectController {
     @Operation(summary = "Update defect details")
     public ResponseEntity<ApiResponse<DefectResponse>> updateDefect(
             @PathVariable Long id,
-            @RequestBody DefectCreateRequest request
+            @Valid @RequestBody DefectCreateRequest request
     ) {
         Defect defect = defectService.updateDefect(id, request);
         return ResponseEntity.ok(ApiResponse.success(defectMapper.toResponse(defect), "Defect updated successfully"));
@@ -170,7 +170,7 @@ public class DefectController {
     @PostMapping("/defect/employee")
     @PreAuthorize("@access.has('DEFECT_ASSIGN_DEVELOPER')")
     @Operation(summary = "Assign developer to defect")
-    public ResponseEntity<ApiResponse<DefectResponse>> assignDeveloper(@RequestBody Map<String, Long> body) {
+    public ResponseEntity<ApiResponse<DefectResponse>> assignDeveloper(@Valid @RequestBody Map<String, Long> body) {
         Long defectId = body.get("defectId");
         Long employeeId = body.get("employeeId");
         Defect defect = defectService.assignDeveloper(defectId, employeeId);
@@ -190,7 +190,7 @@ public class DefectController {
     @Operation(summary = "Transition defect status and record history")
     public ResponseEntity<ApiResponse<DefectResponse>> changeStatus(
             @PathVariable Long defectId,
-            @RequestBody DefectStatusChangeRequest request,
+            @Valid @RequestBody DefectStatusChangeRequest request,
             Authentication authentication
     ) {
         String user = authentication != null ? authentication.getName() : "System";
@@ -260,7 +260,7 @@ public class DefectController {
     @PostMapping("/defect/bulk")
     @PreAuthorize("@access.has('DEFECT_CREATE')")
     @Operation(summary = "Bulk import defects")
-    public ResponseEntity<ApiResponse<String>> bulkImportDefects(@RequestBody List<DefectCreateRequest> requests) {
+    public ResponseEntity<ApiResponse<String>> bulkImportDefects(@Valid @RequestBody List<DefectCreateRequest> requests) {
         for (DefectCreateRequest req : requests) {
             defectService.createDefect(req);
         }

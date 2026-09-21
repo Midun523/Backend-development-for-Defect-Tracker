@@ -10,8 +10,11 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Slf4j
 @Service
+@Transactional
 public class WhatsAppBridgeServiceBridgeImpl implements WhatsAppBridgeService {
 
     @Value("${app.whatsapp.api-url:http://10.197.82.72:3000}")

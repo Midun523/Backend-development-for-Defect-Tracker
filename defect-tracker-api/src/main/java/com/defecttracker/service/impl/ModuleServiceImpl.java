@@ -5,6 +5,7 @@ import com.defecttracker.entity.Employee;
 import com.defecttracker.entity.Module;
 import com.defecttracker.entity.ModuleLeaderAllocation;
 import com.defecttracker.entity.Project;
+import com.defecttracker.exception.BadRequestException;
 import com.defecttracker.exception.ResourceNotFoundException;
 import com.defecttracker.repository.EmployeeRepository;
 import com.defecttracker.repository.ModuleLeaderAllocationRepository;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class ModuleServiceImpl implements ModuleService {
 
@@ -31,14 +33,15 @@ public class ModuleServiceImpl implements ModuleService {
     public Module createModule(Long projectId, ModuleCreateRequest request) {
         Long targetProjectId = projectId != null ? projectId : request.getProjectId();
         if (targetProjectId == null) {
-            throw new com.defecttracker.exception.BadRequestException("Project ID is required to create a module");
+            throw new BadRequestException("Project ID is required to create a module");
         }
         Project project = projectRepository.findById(targetProjectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", "id", targetProjectId));
 
         Employee leader = null;
         if (request.getLeaderId() != null) {
-            leader = employeeRepository.findById(request.getLeaderId()).orElse(null);
+            leader = employeeRepository.findById(request.getLeaderId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", request.getLeaderId()));
         }
 
         Module module = Module.builder()
@@ -61,29 +64,31 @@ public class ModuleServiceImpl implements ModuleService {
     @Transactional
     public Module updateModule(Long projectId, Long moduleId, ModuleCreateRequest request) {
         if (moduleId == null) {
-            throw new com.defecttracker.exception.BadRequestException("Module ID is required to update a module");
+            throw new BadRequestException("Module ID is required to update a module");
         }
         Module module = getModuleById(moduleId);
         module.setName(request.getName());
         module.setDescription(request.getDescription());
 
         if (request.getLeaderId() != null) {
-            employeeRepository.findById(request.getLeaderId()).ifPresent(leader -> {
-                module.setLeader(leader);
-                allocateModuleLeader(moduleId, leader.getId());
-            });
+            Employee leader = employeeRepository.findById(request.getLeaderId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", request.getLeaderId()));
+            module.setLeader(leader);
+            allocateModuleLeader(moduleId, leader.getId());
         }
 
         return moduleRepository.save(module);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Module getModuleById(Long moduleId) {
         return moduleRepository.findById(moduleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Module", "id", moduleId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Module> getModulesByProjectId(Long projectId) {
         return moduleRepository.findByProjectId(projectId);
     }
@@ -127,6 +132,7 @@ public class ModuleServiceImpl implements ModuleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ModuleLeaderAllocation getAllocatedLeader(Long moduleId) {
         return moduleLeaderAllocationRepository.findFirstByModuleIdOrderByAllocatedDateDesc(moduleId).orElse(null);
     }

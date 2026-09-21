@@ -2,14 +2,21 @@ package com.defecttracker.service.impl;
 
 import com.defecttracker.dto.request.EmployeeCreateRequest;
 import com.defecttracker.dto.response.PaginatedResponse;
-import com.defecttracker.entity.*;
+import com.defecttracker.entity.Designation;
+import com.defecttracker.entity.Employee;
+import com.defecttracker.entity.Role;
+import com.defecttracker.entity.User;
 import com.defecttracker.exception.BadRequestException;
 import com.defecttracker.exception.ResourceNotFoundException;
-import com.defecttracker.repository.*;
+import com.defecttracker.repository.DesignationRepository;
+import com.defecttracker.repository.EmployeeRepository;
+import com.defecttracker.repository.RoleRepository;
+import com.defecttracker.repository.UserRepository;
 import com.defecttracker.service.EmployeeService;
+import com.defecttracker.service.ProjectSequenceService;
+import com.defecttracker.util.PageableUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +27,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class EmployeeServiceImpl implements EmployeeService {
 
@@ -28,6 +36,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final DesignationRepository designationRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ProjectSequenceService projectSequenceService;
 
     @Override
     @Transactional
@@ -39,15 +48,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         Designation designation = null;
         if (request.getDesignationId() != null) {
             designation = designationRepository.findById(request.getDesignationId())
-                    .orElse(null);
+                    .orElseThrow(() -> new ResourceNotFoundException("Designation", "id", request.getDesignationId()));
         }
 
-        long count = userRepository.count() + 1;
-        String userCode = String.format("US%04d", count);
-        while (userRepository.existsByUserId(userCode)) {
-            count++;
-            userCode = String.format("US%04d", count);
-        }
+        String userCode = projectSequenceService.getNextEmployeeCode();
 
         String rawPassword = (request.getPassword() != null && !request.getPassword().trim().isEmpty())
                 ? request.getPassword()
@@ -55,9 +59,13 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         Set<Role> roles = new HashSet<>();
         if (request.getRoleId() != null) {
-            roleRepository.findById(request.getRoleId()).ifPresent(roles::add);
+            Role r = roleRepository.findById(request.getRoleId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Role", "id", request.getRoleId()));
+            roles.add(r);
         } else {
-            roleRepository.findByRoleName("Developer").ifPresent(roles::add);
+            Role defRole = roleRepository.findTopByOrderByIdAsc()
+                    .orElseThrow(() -> new ResourceNotFoundException("Role", "default", "none found"));
+            roles.add(defRole);
         }
 
         User user = User.builder()
@@ -111,8 +119,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = getEmployeeById(id);
 
         if (request.getDesignationId() != null) {
-            designationRepository.findById(request.getDesignationId())
-                    .ifPresent(employee::setDesignation);
+            Designation d = designationRepository.findById(request.getDesignationId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Designation", "id", request.getDesignationId()));
+            employee.setDesignation(d);
         }
 
         employee.setFirstName(request.getFirstName());
@@ -143,14 +152,16 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Employee getEmployeeById(Long id) {
         return employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PaginatedResponse<Employee> getAllEmployees(int page, int size, String query) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
+        Pageable pageable = PageableUtils.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
         Page<Employee> employeePage;
         if (query != null && !query.trim().isEmpty()) {
             employeePage = employeeRepository.searchEmployees(query.trim(), pageable);
@@ -170,6 +181,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Employee> getAllEmployeesList() {
         return employeeRepository.findAll();
     }
@@ -194,16 +206,19 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Employee> getBenchEmployees() {
         return employeeRepository.findBenchEmployees();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Employee> getEmployeesByDesignation(Long designationId) {
         return employeeRepository.findByDesignationId(designationId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Employee> getAvailableManagers(Long designationId, Long projectId) {
         if (designationId != null) {
             return employeeRepository.findAvailableManagersByDesignation(designationId);

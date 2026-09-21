@@ -5,8 +5,12 @@ import com.defecttracker.entity.Designation;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface DesignationMapper {
     @Mapping(target = "name", expression = "java(designation.getDesignationName())")
     DesignationSummary toSummary(Designation designation);
+
+    List<DesignationSummary> toSummaryList(List<Designation> designations);
 }

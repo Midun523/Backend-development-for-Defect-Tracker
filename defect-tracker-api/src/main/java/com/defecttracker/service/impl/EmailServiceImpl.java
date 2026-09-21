@@ -22,6 +22,7 @@ import java.util.*;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 

@@ -2,49 +2,59 @@ package com.defecttracker.service.impl;
 
 import com.defecttracker.dto.request.ProjectCreateRequest;
 import com.defecttracker.dto.response.PaginatedResponse;
+import com.defecttracker.entity.Client;
 import com.defecttracker.entity.Employee;
 import com.defecttracker.entity.Project;
 import com.defecttracker.exception.ResourceNotFoundException;
+import com.defecttracker.repository.ClientRepository;
 import com.defecttracker.repository.EmployeeRepository;
+import com.defecttracker.repository.KlocMetricRepository;
 import com.defecttracker.repository.ProjectRepository;
+import com.defecttracker.repository.WorkflowPositionRepository;
+import com.defecttracker.service.ProjectSequenceService;
 import com.defecttracker.service.ProjectService;
+import com.defecttracker.util.PageableUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final EmployeeRepository employeeRepository;
-    private final com.defecttracker.repository.ClientRepository clientRepository;
-    private final com.defecttracker.repository.KlocMetricRepository klocMetricRepository;
-    private final com.defecttracker.repository.WorkflowPositionRepository workflowPositionRepository;
+    private final ClientRepository clientRepository;
+    private final KlocMetricRepository klocMetricRepository;
+    private final WorkflowPositionRepository workflowPositionRepository;
+    private final ProjectSequenceService projectSequenceService;
 
     @Override
+    @Transactional
     public Project createProject(ProjectCreateRequest request) {
         Employee manager = null;
         if (request.getManager() != null) {
-            manager = employeeRepository.findById(request.getManager()).orElse(null);
+            manager = employeeRepository.findById(request.getManager())
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", request.getManager()));
         }
 
-        com.defecttracker.entity.Client client = null;
+        Client client = null;
         if (request.getClientId() != null) {
-            client = clientRepository.findById(request.getClientId()).orElse(null);
+            client = clientRepository.findById(request.getClientId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Client", "id", request.getClientId()));
         }
 
-        long count = projectRepository.count() + 1;
         String prefix = (request.getPrefix() != null && !request.getPrefix().trim().isEmpty())
                 ? request.getPrefix().toUpperCase()
                 : "PRJ";
-        String projectId = String.format("%s%03d", prefix, count);
+        String projectId = projectSequenceService.getNextProjectCode(prefix);
 
         Project project = Project.builder()
                 .projectId(projectId)
@@ -71,22 +81,25 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public Project updateProject(Long id, ProjectCreateRequest request) {
         Project project = getProjectById(id);
 
         if (request.getManager() != null) {
-            employeeRepository.findById(request.getManager()).ifPresent(project::setManager);
+            Employee manager = employeeRepository.findById(request.getManager())
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", request.getManager()));
+            project.setManager(manager);
         }
 
         if (request.getClientId() != null) {
-            clientRepository.findById(request.getClientId()).ifPresent(c -> {
-                project.setClient(c);
-                project.setClientName(c.getClientName());
-                project.setClientCountry(c.getCountry());
-                project.setClientState(c.getState());
-                project.setClientEmail(c.getEmail());
-                project.setClientPhone(c.getPhoneNumber());
-            });
+            Client c = clientRepository.findById(request.getClientId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Client", "id", request.getClientId()));
+            project.setClient(c);
+            project.setClientName(c.getClientName());
+            project.setClientCountry(c.getCountry());
+            project.setClientState(c.getState());
+            project.setClientEmail(c.getEmail());
+            project.setClientPhone(c.getPhoneNumber());
         }
 
         if (request.getEffectiveName() != null) project.setName(request.getEffectiveName());
@@ -109,19 +122,22 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Project getProjectById(Long id) {
         return projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", "id", id));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Project> getAllProjects() {
         return projectRepository.findAll(Sort.by("id").descending());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PaginatedResponse<Project> searchProjects(String query, int page, int size) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
+        Pageable pageable = PageableUtils.of(Math.max(0, page), Math.max(1, size), Sort.by("id").descending());
         Page<Project> projectPage;
         if (query != null && !query.trim().isEmpty()) {
             projectPage = projectRepository.searchProjects(query.trim(), pageable);
@@ -141,7 +157,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public void deleteProject(Long id) {
         Project project = getProjectById(id);
         klocMetricRepository.deleteAll(klocMetricRepository.findByProjectId(id));
@@ -150,6 +166,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public Project updateKloc(Long projectId, Double kloc) {
         Project project = getProjectById(projectId);
         project.setKloc(kloc != null ? kloc : 0.0);

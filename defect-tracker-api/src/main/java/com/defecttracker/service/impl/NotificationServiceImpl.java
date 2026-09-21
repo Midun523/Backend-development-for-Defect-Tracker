@@ -8,8 +8,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
 

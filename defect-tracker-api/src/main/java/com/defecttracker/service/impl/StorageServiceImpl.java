@@ -16,8 +16,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Slf4j
 @Service
+@Transactional
 public class StorageServiceImpl implements StorageService {
 
     private final Path fileStorageLocation;

@@ -13,7 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 

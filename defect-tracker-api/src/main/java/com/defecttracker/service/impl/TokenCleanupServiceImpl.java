@@ -13,6 +13,7 @@ import java.time.Instant;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class TokenCleanupServiceImpl implements TokenCleanupService {
 
