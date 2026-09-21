@@ -36,6 +36,9 @@ public class TestDataFixture {
     private final StatusTypeRepository statusTypeRepository;
     private final DefectTypeRepository defectTypeRepository;
     private final ReleaseTypeRepository releaseTypeRepository;
+    private final DefectHistoryRepository defectHistoryRepository;
+    private final DefectStatusLogRepository defectStatusLogRepository;
+    private final TestCaseAllocationLogRepository testCaseAllocationLogRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -50,6 +53,9 @@ public class TestDataFixture {
             ProjectAllocationRepository projectAllocationRepository,
             DefectRepository defectRepository,
             DefectCommentRepository defectCommentRepository,
+            DefectHistoryRepository defectHistoryRepository,
+            DefectStatusLogRepository defectStatusLogRepository,
+            TestCaseAllocationLogRepository testCaseAllocationLogRepository,
             KlocMetricRepository klocMetricRepository,
             EmailConfigRepository emailConfigRepository,
             EmailTemplateRepository emailTemplateRepository,
@@ -74,6 +80,9 @@ public class TestDataFixture {
         this.projectAllocationRepository = projectAllocationRepository;
         this.defectRepository = defectRepository;
         this.defectCommentRepository = defectCommentRepository;
+        this.defectHistoryRepository = defectHistoryRepository;
+        this.defectStatusLogRepository = defectStatusLogRepository;
+        this.testCaseAllocationLogRepository = testCaseAllocationLogRepository;
         this.klocMetricRepository = klocMetricRepository;
         this.emailConfigRepository = emailConfigRepository;
         this.emailTemplateRepository = emailTemplateRepository;
@@ -104,6 +113,9 @@ public class TestDataFixture {
             Long projectAllocationId,
             Long defectId,
             Long defectCommentId,
+            Long defectHistoryId,
+            Long defectStatusLogId,
+            Long testCaseAllocationLogId,
             Long klocId,
             Long emailConfigId,
             Long emailTemplateId,
@@ -264,7 +276,7 @@ public class TestDataFixture {
                         .assignedQa(qaEmployee)
                         .build()));
 
-        // 8. Release & ReleaseTestCase
+        // 8. Release
         Release release = releaseRepository.findAll().stream().findFirst()
                 .orElseGet(() -> releaseRepository.save(Release.builder()
                         .releaseNo("REL_FIXTURE_1")
@@ -273,14 +285,6 @@ public class TestDataFixture {
                         .project(project)
                         .releaseType(releaseType)
                         .status("PLANNED")
-                        .build()));
-
-        ReleaseTestCase releaseTestCase = releaseTestCaseRepository.findAll().stream().findFirst()
-                .orElseGet(() -> releaseTestCaseRepository.save(ReleaseTestCase.builder()
-                        .release(release)
-                        .testCase(testCase)
-                        .assignedQa(qaEmployee)
-                        .executionStatus("PASS")
                         .build()));
 
         // 9. Project Allocation
@@ -293,7 +297,7 @@ public class TestDataFixture {
                         .status("ACTIVE")
                         .build()));
 
-        // 10. Defect & DefectComment
+        // 10. Defect
         Defect defect = defectRepository.findAll().stream().findFirst()
                 .orElseGet(() -> defectRepository.save(Defect.builder()
                         .defectId("DEF_FIXTURE_1")
@@ -312,6 +316,21 @@ public class TestDataFixture {
                         .defectType(defectType)
                         .build()));
 
+        // 11. ReleaseTestCase with linked defect
+        ReleaseTestCase releaseTestCase = releaseTestCaseRepository.findAll().stream().findFirst()
+                .orElseGet(() -> releaseTestCaseRepository.save(ReleaseTestCase.builder()
+                        .release(release)
+                        .testCase(testCase)
+                        .assignedQa(qaEmployee)
+                        .linkedDefect(defect)
+                        .executionStatus("PASS")
+                        .build()));
+        if (releaseTestCase.getLinkedDefect() == null) {
+            releaseTestCase.setLinkedDefect(defect);
+            releaseTestCase = releaseTestCaseRepository.save(releaseTestCase);
+        }
+
+        // 12. DefectComment, DefectHistory, DefectStatusLog, TestCaseAllocationLog
         DefectComment defectComment = defectCommentRepository.findAll().stream().findFirst()
                 .orElseGet(() -> defectCommentRepository.save(DefectComment.builder()
                         .defect(defect)
@@ -319,7 +338,32 @@ public class TestDataFixture {
                         .comment("Initial defect comment from QA")
                         .build()));
 
-        // 11. KlocMetric
+        DefectHistory defectHistory = defectHistoryRepository.findAll().stream().findFirst()
+                .orElseGet(() -> defectHistoryRepository.save(DefectHistory.builder()
+                        .defect(defect)
+                        .fromStatus("NEW")
+                        .toStatus("OPEN")
+                        .changedBy(qaUser.getEmail())
+                        .comment("Fixture defect history entry")
+                        .build()));
+
+        DefectStatusLog defectStatusLog = defectStatusLogRepository.findAll().stream().findFirst()
+                .orElseGet(() -> defectStatusLogRepository.save(DefectStatusLog.builder()
+                        .project(project)
+                        .release(release)
+                        .defect(defect)
+                        .status("NEW")
+                        .build()));
+
+        TestCaseAllocationLog testCaseAllocationLog = testCaseAllocationLogRepository.findAll().stream().findFirst()
+                .orElseGet(() -> testCaseAllocationLogRepository.save(TestCaseAllocationLog.builder()
+                        .release(release)
+                        .testCase(testCase)
+                        .employee(qaEmployee)
+                        .action("ASSIGNED")
+                        .build()));
+
+        // 13. KlocMetric
         KlocMetric klocMetric = klocMetricRepository.findAll().stream().findFirst()
                 .orElseGet(() -> klocMetricRepository.save(KlocMetric.builder()
                         .project(project)
@@ -331,7 +375,7 @@ public class TestDataFixture {
                         .totalLinesOfCode(10000L)
                         .build()));
 
-        // 12. EmailConfig & EmailTemplate
+        // 14. EmailConfig & EmailTemplate
         EmailConfig emailConfig = emailConfigRepository.findAll().stream().findFirst()
                 .orElseGet(() -> emailConfigRepository.save(EmailConfig.builder()
                         .name("Fixture SMTP")
@@ -370,6 +414,9 @@ public class TestDataFixture {
                 projectAllocation.getId(),
                 defect.getId(),
                 defectComment.getId(),
+                defectHistory.getId(),
+                defectStatusLog.getId(),
+                testCaseAllocationLog.getId(),
                 klocMetric.getId(),
                 emailConfig.getId(),
                 emailTemplate.getId(),

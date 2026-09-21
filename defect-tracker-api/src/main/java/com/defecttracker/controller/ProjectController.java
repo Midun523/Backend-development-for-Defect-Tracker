@@ -3,7 +3,9 @@ package com.defecttracker.controller;
 import com.defecttracker.dto.request.ProjectCreateRequest;
 import com.defecttracker.dto.response.ApiResponse;
 import com.defecttracker.dto.response.PaginatedResponse;
+import com.defecttracker.dto.response.ProjectResponse;
 import com.defecttracker.entity.Project;
+import com.defecttracker.mapper.ProjectMapper;
 import com.defecttracker.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,13 +25,14 @@ import java.util.Map;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final ProjectMapper projectMapper;
 
     @PostMapping
     @PreAuthorize("@access.has('PROJECT_CREATE')")
     @Operation(summary = "Create project")
-    public ResponseEntity<ApiResponse<Project>> createProject(@Valid @RequestBody ProjectCreateRequest request) {
+    public ResponseEntity<ApiResponse<ProjectResponse>> createProject(@Valid @RequestBody ProjectCreateRequest request) {
         Project project = projectService.createProject(request);
-        return ResponseEntity.ok(ApiResponse.created(project, "Project created successfully"));
+        return ResponseEntity.ok(ApiResponse.created(projectMapper.toResponse(project), "Project created successfully"));
     }
 
     @GetMapping
@@ -42,29 +45,38 @@ public class ProjectController {
     ) {
         if (page != null && size != null) {
             PaginatedResponse<Project> p = projectService.searchProjects(query, page, size);
-            return ResponseEntity.ok(ApiResponse.success(p, "Projects retrieved"));
+            PaginatedResponse<ProjectResponse> dto = PaginatedResponse.<ProjectResponse>builder()
+                    .content(projectMapper.toResponseList(p.getContent()))
+                    .pageNumber(p.getPageNumber())
+                    .pageSize(p.getPageSize())
+                    .totalElements(p.getTotalElements())
+                    .totalPages(p.getTotalPages())
+                    .last(p.isLast())
+                    .first(p.isFirst())
+                    .build();
+            return ResponseEntity.ok(ApiResponse.success(dto, "Projects retrieved"));
         }
-        List<Project> all = projectService.getAllProjects();
+        List<ProjectResponse> all = projectMapper.toResponseList(projectService.getAllProjects());
         return ResponseEntity.ok(ApiResponse.success(all, "Projects retrieved"));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #id)")
     @Operation(summary = "Get project by ID")
-    public ResponseEntity<ApiResponse<Project>> getProjectById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ProjectResponse>> getProjectById(@PathVariable Long id) {
         Project project = projectService.getProjectById(id);
-        return ResponseEntity.ok(ApiResponse.success(project, "Project found"));
+        return ResponseEntity.ok(ApiResponse.success(projectMapper.toResponse(project), "Project found"));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("@access.hasProjectAccess('PROJECT_UPDATE', #id)")
     @Operation(summary = "Update project")
-    public ResponseEntity<ApiResponse<Project>> updateProject(
+    public ResponseEntity<ApiResponse<ProjectResponse>> updateProject(
             @PathVariable Long id,
             @Valid @RequestBody ProjectCreateRequest request
     ) {
         Project project = projectService.updateProject(id, request);
-        return ResponseEntity.ok(ApiResponse.success(project, "Project updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(projectMapper.toResponse(project), "Project updated successfully"));
     }
 
     @DeleteMapping("/{id}")
@@ -78,12 +90,12 @@ public class ProjectController {
     @PatchMapping("/{projectId}/project-kilo-of-code")
     @PreAuthorize("@access.hasProjectAccess('PROJECT_UPDATE', #projectId)")
     @Operation(summary = "Update KLOC metric for project")
-    public ResponseEntity<ApiResponse<Project>> updateProjectKloc(
+    public ResponseEntity<ApiResponse<ProjectResponse>> updateProjectKloc(
             @PathVariable Long projectId,
             @RequestBody Map<String, Double> body
     ) {
         Double kloc = body.getOrDefault("kloc", 0.0);
         Project project = projectService.updateKloc(projectId, kloc);
-        return ResponseEntity.ok(ApiResponse.success(project, "Project KLOC updated"));
+        return ResponseEntity.ok(ApiResponse.success(projectMapper.toResponse(project), "Project KLOC updated"));
     }
 }

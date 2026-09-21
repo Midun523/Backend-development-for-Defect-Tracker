@@ -24,6 +24,7 @@ import java.util.List;
 public class AuthController {
 
     private final AuthService authService;
+    private final com.defecttracker.mapper.ProjectMapper projectMapper;
 
     @PostMapping("/auth/login")
     @Operation(summary = "Authenticate user and get JWT tokens")
@@ -96,9 +97,9 @@ public class AuthController {
     @GetMapping("/user/me/projects")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get accessible projects for current user")
-    public ResponseEntity<ApiResponse<List<Project>>> getCurrentUserProjects(Authentication authentication) {
+    public ResponseEntity<ApiResponse<List<com.defecttracker.dto.response.ProjectResponse>>> getCurrentUserProjects(Authentication authentication) {
         List<Project> projects = authService.getCurrentUserProjects(authentication.getName());
-        return ResponseEntity.ok(ApiResponse.success(projects, "Projects retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(projectMapper.toResponseList(projects), "Projects retrieved"));
     }
 
     @GetMapping("/user/me/projects/{projectId}/permissions")

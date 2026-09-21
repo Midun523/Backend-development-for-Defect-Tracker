@@ -2,12 +2,15 @@ package com.defecttracker.controller;
 
 import com.defecttracker.dto.request.ProjectAllocationRequest;
 import com.defecttracker.dto.response.ApiResponse;
+import com.defecttracker.dto.response.EmployeeResponse;
+import com.defecttracker.dto.response.ProjectAllocationResponse;
 import com.defecttracker.entity.Employee;
 import com.defecttracker.entity.ProjectAllocation;
+import com.defecttracker.mapper.EmployeeMapper;
+import com.defecttracker.mapper.ProjectAllocationMapper;
 import com.defecttracker.service.ProjectAllocationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,40 +27,42 @@ import java.util.Map;
 public class ProjectAllocationController {
 
     private final ProjectAllocationService projectAllocationService;
+    private final ProjectAllocationMapper projectAllocationMapper;
+    private final EmployeeMapper employeeMapper;
 
     @PostMapping("/project-allocation")
     @PreAuthorize("@access.hasProjectAccess('BENCH_ALLOCATE', #request.projectId)")
     @Operation(summary = "Allocate employee to project")
-    public ResponseEntity<ApiResponse<ProjectAllocation>> allocateEmployee(@RequestBody ProjectAllocationRequest request) {
+    public ResponseEntity<ApiResponse<ProjectAllocationResponse>> allocateEmployee(@RequestBody ProjectAllocationRequest request) {
         ProjectAllocation allocation = projectAllocationService.allocateEmployee(request);
-        return ResponseEntity.ok(ApiResponse.created(allocation, "Employee allocated successfully"));
+        return ResponseEntity.ok(ApiResponse.created(projectAllocationMapper.toResponse(allocation), "Employee allocated successfully"));
     }
 
     @GetMapping("/project-allocation")
     @PreAuthorize("@access.has('BENCH_READ')")
     @Operation(summary = "Get all project allocations")
-    public ResponseEntity<ApiResponse<List<ProjectAllocation>>> getAllAllocations() {
+    public ResponseEntity<ApiResponse<List<ProjectAllocationResponse>>> getAllAllocations() {
         List<ProjectAllocation> list = projectAllocationService.getAllocations();
-        return ResponseEntity.ok(ApiResponse.success(list, "All project allocations retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(projectAllocationMapper.toResponseList(list), "All project allocations retrieved"));
     }
 
     @GetMapping("/project-allocation/{projectId}")
     @PreAuthorize("@access.hasProjectAccess('BENCH_READ', #projectId)")
     @Operation(summary = "Get allocations for a project")
-    public ResponseEntity<ApiResponse<List<ProjectAllocation>>> getAllocationsByProject(@PathVariable Long projectId) {
+    public ResponseEntity<ApiResponse<List<ProjectAllocationResponse>>> getAllocationsByProject(@PathVariable Long projectId) {
         List<ProjectAllocation> list = projectAllocationService.getAllocationsByProject(projectId);
-        return ResponseEntity.ok(ApiResponse.success(list, "Project allocations retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(projectAllocationMapper.toResponseList(list), "Project allocations retrieved"));
     }
 
     @PutMapping("/project-allocation/{id}")
     @PreAuthorize("@access.hasAllocationAccess('BENCH_ALLOCATE', #id)")
     @Operation(summary = "Update project allocation")
-    public ResponseEntity<ApiResponse<ProjectAllocation>> updateProjectAllocation(
+    public ResponseEntity<ApiResponse<ProjectAllocationResponse>> updateProjectAllocation(
             @PathVariable Long id,
             @RequestBody ProjectAllocationRequest request
     ) {
         ProjectAllocation updated = projectAllocationService.updateAllocation(id, request);
-        return ResponseEntity.ok(ApiResponse.success(updated, "Project allocation updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(projectAllocationMapper.toResponse(updated), "Project allocation updated successfully"));
     }
 
     @DeleteMapping("/project-allocation/{id}")
@@ -71,25 +76,25 @@ public class ProjectAllocationController {
     @GetMapping("/project-allocation/{projectId}/employee")
     @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get employees allocated to project")
-    public ResponseEntity<ApiResponse<List<Employee>>> getEmployeesByProject(@PathVariable Long projectId) {
+    public ResponseEntity<ApiResponse<List<EmployeeResponse>>> getEmployeesByProject(@PathVariable Long projectId) {
         List<Employee> list = projectAllocationService.getEmployeesByProject(projectId);
-        return ResponseEntity.ok(ApiResponse.success(list, "Allocated employees retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(employeeMapper.toResponseList(list), "Allocated employees retrieved"));
     }
 
     @GetMapping("/project-allocation/{projectId}/employee_history")
     @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get project employee allocation history")
-    public ResponseEntity<ApiResponse<List<ProjectAllocation>>> getEmployeeAllocationHistory(@PathVariable Long projectId) {
+    public ResponseEntity<ApiResponse<List<ProjectAllocationResponse>>> getEmployeeAllocationHistory(@PathVariable Long projectId) {
         List<ProjectAllocation> list = projectAllocationService.getEmployeeAllocationHistory(projectId);
-        return ResponseEntity.ok(ApiResponse.success(list, "Allocation history retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(projectAllocationMapper.toResponseList(list), "Allocation history retrieved"));
     }
 
     @GetMapping("/project-allocation/employee/{userId}")
     @PreAuthorize("@access.has('BENCH_READ')")
     @Operation(summary = "Get project allocations by employee/user ID")
-    public ResponseEntity<ApiResponse<List<ProjectAllocation>>> getAllocationsByEmployee(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<List<ProjectAllocationResponse>>> getAllocationsByEmployee(@PathVariable Long userId) {
         List<ProjectAllocation> list = projectAllocationService.getAllocationsByEmployee(userId);
-        return ResponseEntity.ok(ApiResponse.success(list, "Employee allocations retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(projectAllocationMapper.toResponseList(list), "Employee allocations retrieved"));
     }
 
     @DeleteMapping("/project-allocation/employee/{id}")
@@ -103,12 +108,12 @@ public class ProjectAllocationController {
     @PatchMapping("/project-allocation/employee/{id}/extend")
     @PreAuthorize("@access.hasAllocationAccess('BENCH_ALLOCATE', #id)")
     @Operation(summary = "Extend employee project allocation end date")
-    public ResponseEntity<ApiResponse<ProjectAllocation>> extendAllocation(
+    public ResponseEntity<ApiResponse<ProjectAllocationResponse>> extendAllocation(
             @PathVariable Long id,
             @RequestBody Map<String, String> body
     ) {
         LocalDate newEndDate = LocalDate.parse(body.get("endDate"));
         ProjectAllocation allocation = projectAllocationService.extendAllocation(id, newEndDate);
-        return ResponseEntity.ok(ApiResponse.success(allocation, "Allocation extended successfully"));
+        return ResponseEntity.ok(ApiResponse.success(projectAllocationMapper.toResponse(allocation), "Allocation extended successfully"));
     }
 }

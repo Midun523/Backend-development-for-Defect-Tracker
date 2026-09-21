@@ -1,0 +1,12 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "Release counts retrieved",
+  "statusMessage" : "Release counts retrieved",
+  "data" : {
+    "total" : 1,
+    "inProgress" : 0,
+    "planned" : 1,
+    "completed" : 0
+  }
+}

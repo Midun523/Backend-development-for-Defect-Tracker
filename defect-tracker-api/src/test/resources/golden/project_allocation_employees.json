@@ -1,0 +1,63 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "Allocated employees retrieved",
+  "statusMessage" : "Allocated employees retrieved",
+  "data" : [ {
+    "id" : 3,
+    "user" : {
+      "id" : 3,
+      "userId" : "US_DEV",
+      "firstName" : "Developer",
+      "lastName" : "Fixture",
+      "email" : "dev_fixture@defecttracker.com",
+      "phone" : null,
+      "gender" : null,
+      "userStatus" : "ACTIVE",
+      "userType" : "CompanyStaff",
+      "designation" : {
+        "id" : 7,
+        "designationName" : "Software Engineer",
+        "description" : "Developer handling feature implementation and bug fixing",
+        "totalEmployees" : 0,
+        "name" : "Software Engineer"
+      },
+      "roles" : [ {
+        "id" : 5,
+        "roleName" : "Developer",
+        "type" : "Engineering",
+        "description" : "Fixes defects and implements modules",
+        "name" : "Developer"
+      } ],
+      "resetCount" : 0,
+      "createdAt" : "2026-09-21T11:08:02.556956",
+      "updatedAt" : "2026-09-21T11:08:02.556956"
+    },
+    "firstName" : "Developer",
+    "lastName" : "Fixture",
+    "email" : "dev_fixture@defecttracker.com",
+    "phone" : null,
+    "gender" : null,
+    "designation" : {
+      "id" : 7,
+      "designationName" : "Software Engineer",
+      "description" : "Developer handling feature implementation and bug fixing",
+      "totalEmployees" : 0,
+      "name" : "Software Engineer"
+    },
+    "experience" : 0.0,
+    "joinedDate" : null,
+    "skills" : null,
+    "availability" : 100,
+    "status" : "active",
+    "department" : null,
+    "manager" : null,
+    "startDate" : null,
+    "endDate" : null,
+    "whatsappNumber" : null,
+    "resetCount" : 0,
+    "address" : null,
+    "createdAt" : "2026-09-21T11:08:02.560959",
+    "updatedAt" : "2026-09-21T11:08:02.560959"
+  } ]
+}
