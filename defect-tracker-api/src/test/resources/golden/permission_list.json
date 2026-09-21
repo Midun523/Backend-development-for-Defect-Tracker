@@ -1,0 +1,291 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "Permissions retrieved",
+  "statusMessage" : "Permissions retrieved",
+  "data" : [ {
+    "permissionId" : 1,
+    "action" : "DESIGNATION_CREATE",
+    "description" : "Create Designation"
+  }, {
+    "permissionId" : 2,
+    "action" : "DESIGNATION_UPDATE",
+    "description" : "Update Designation"
+  }, {
+    "permissionId" : 3,
+    "action" : "DESIGNATION_READ",
+    "description" : "View Designation"
+  }, {
+    "permissionId" : 4,
+    "action" : "DESIGNATION_DELETE",
+    "description" : "Delete Designation"
+  }, {
+    "permissionId" : 5,
+    "action" : "ROLE_CREATE",
+    "description" : "Create Role"
+  }, {
+    "permissionId" : 6,
+    "action" : "ROLE_UPDATE",
+    "description" : "Update Role"
+  }, {
+    "permissionId" : 7,
+    "action" : "ROLE_READ",
+    "description" : "View Role"
+  }, {
+    "permissionId" : 8,
+    "action" : "ROLE_DELETE",
+    "description" : "Delete Role"
+  }, {
+    "permissionId" : 9,
+    "action" : "PERMISSION_READ",
+    "description" : "View Permissions"
+  }, {
+    "permissionId" : 10,
+    "action" : "ROLE_PERMISSION_ASSIGN",
+    "description" : "Assign Permissions to Role"
+  }, {
+    "permissionId" : 11,
+    "action" : "ROLE_PERMISSION_READ",
+    "description" : "View Role Permissions"
+  }, {
+    "permissionId" : 12,
+    "action" : "DEFECT_TYPE_CREATE",
+    "description" : "Create Defect Type"
+  }, {
+    "permissionId" : 13,
+    "action" : "DEFECT_TYPE_UPDATE",
+    "description" : "Update Defect Type"
+  }, {
+    "permissionId" : 14,
+    "action" : "DEFECT_TYPE_READ",
+    "description" : "View Defect Type"
+  }, {
+    "permissionId" : 15,
+    "action" : "DEFECT_TYPE_DELETE",
+    "description" : "Delete Defect Type"
+  }, {
+    "permissionId" : 16,
+    "action" : "RELEASE_TYPE_CREATE",
+    "description" : "Create Release Type"
+  }, {
+    "permissionId" : 17,
+    "action" : "RELEASE_TYPE_UPDATE",
+    "description" : "Update Release Type"
+  }, {
+    "permissionId" : 18,
+    "action" : "RELEASE_TYPE_READ",
+    "description" : "View Release Type"
+  }, {
+    "permissionId" : 19,
+    "action" : "RELEASE_TYPE_DELETE",
+    "description" : "Delete Release Type"
+  }, {
+    "permissionId" : 20,
+    "action" : "SEVERITY_CREATE",
+    "description" : "Create Severity"
+  }, {
+    "permissionId" : 21,
+    "action" : "SEVERITY_UPDATE",
+    "description" : "Update Severity"
+  }, {
+    "permissionId" : 22,
+    "action" : "SEVERITY_READ",
+    "description" : "View Severity"
+  }, {
+    "permissionId" : 23,
+    "action" : "SEVERITY_DELETE",
+    "description" : "Delete Severity"
+  }, {
+    "permissionId" : 24,
+    "action" : "PRIORITY_CREATE",
+    "description" : "Create Priority"
+  }, {
+    "permissionId" : 25,
+    "action" : "PRIORITY_UPDATE",
+    "description" : "Update Priority"
+  }, {
+    "permissionId" : 26,
+    "action" : "PRIORITY_READ",
+    "description" : "View Priority"
+  }, {
+    "permissionId" : 27,
+    "action" : "PRIORITY_DELETE",
+    "description" : "Delete Priority"
+  }, {
+    "permissionId" : 28,
+    "action" : "STATUS_TYPE_CREATE",
+    "description" : "Create Status Type"
+  }, {
+    "permissionId" : 29,
+    "action" : "STATUS_TYPE_UPDATE",
+    "description" : "Update Status Type"
+  }, {
+    "permissionId" : 30,
+    "action" : "STATUS_TYPE_READ",
+    "description" : "View Status Type"
+  }, {
+    "permissionId" : 31,
+    "action" : "STATUS_TYPE_DELETE",
+    "description" : "Delete Status Type"
+  }, {
+    "permissionId" : 32,
+    "action" : "WORKFLOW_CREATE",
+    "description" : "Create Workflow"
+  }, {
+    "permissionId" : 33,
+    "action" : "WORKFLOW_READ",
+    "description" : "View Workflow"
+  }, {
+    "permissionId" : 34,
+    "action" : "WORKFLOW_UPDATE",
+    "description" : "Update Workflow"
+  }, {
+    "permissionId" : 35,
+    "action" : "EMPLOYEE_CREATE",
+    "description" : "Create Employee"
+  }, {
+    "permissionId" : 36,
+    "action" : "EMPLOYEE_UPDATE",
+    "description" : "Update Employee"
+  }, {
+    "permissionId" : 37,
+    "action" : "EMPLOYEE_READ",
+    "description" : "View Employee"
+  }, {
+    "permissionId" : 38,
+    "action" : "EMPLOYEE_DELETE",
+    "description" : "Delete Employee"
+  }, {
+    "permissionId" : 39,
+    "action" : "BENCH_READ",
+    "description" : "View Bench"
+  }, {
+    "permissionId" : 40,
+    "action" : "BENCH_ALLOCATE",
+    "description" : "Allocate and deallocate employees on projects"
+  }, {
+    "permissionId" : 41,
+    "action" : "PROJECT_CREATE",
+    "description" : "Create Project"
+  }, {
+    "permissionId" : 42,
+    "action" : "PROJECT_UPDATE",
+    "description" : "Update Project"
+  }, {
+    "permissionId" : 43,
+    "action" : "PROJECT_READ",
+    "description" : "View Project"
+  }, {
+    "permissionId" : 44,
+    "action" : "PROJECT_DELETE",
+    "description" : "Delete Project"
+  }, {
+    "permissionId" : 45,
+    "action" : "MODULE_CREATE",
+    "description" : "Create Module"
+  }, {
+    "permissionId" : 46,
+    "action" : "MODULE_UPDATE",
+    "description" : "Update Module"
+  }, {
+    "permissionId" : 47,
+    "action" : "MODULE_READ",
+    "description" : "View Module"
+  }, {
+    "permissionId" : 48,
+    "action" : "MODULE_DELETE",
+    "description" : "Delete Module"
+  }, {
+    "permissionId" : 49,
+    "action" : "TEST_CASE_CREATE",
+    "description" : "Create Test Case"
+  }, {
+    "permissionId" : 50,
+    "action" : "TEST_CASE_UPDATE",
+    "description" : "Update Test Case"
+  }, {
+    "permissionId" : 51,
+    "action" : "TEST_CASE_READ",
+    "description" : "View Test Case"
+  }, {
+    "permissionId" : 52,
+    "action" : "TEST_CASE_DELETE",
+    "description" : "Delete Test Case"
+  }, {
+    "permissionId" : 53,
+    "action" : "RELEASE_CREATE",
+    "description" : "Create Release"
+  }, {
+    "permissionId" : 54,
+    "action" : "RELEASE_UPDATE",
+    "description" : "Update Release"
+  }, {
+    "permissionId" : 55,
+    "action" : "RELEASE_READ",
+    "description" : "View Release"
+  }, {
+    "permissionId" : 56,
+    "action" : "RELEASE_DELETE",
+    "description" : "Delete Release"
+  }, {
+    "permissionId" : 57,
+    "action" : "DEFECT_CREATE",
+    "description" : "Create Defect"
+  }, {
+    "permissionId" : 58,
+    "action" : "DEFECT_UPDATE",
+    "description" : "Update Defect"
+  }, {
+    "permissionId" : 59,
+    "action" : "DEFECT_READ",
+    "description" : "View Defect"
+  }, {
+    "permissionId" : 60,
+    "action" : "DEFECT_DELETE",
+    "description" : "Delete Defect"
+  }, {
+    "permissionId" : 61,
+    "action" : "DEFECT_ASSIGN_DEVELOPER",
+    "description" : "Assign Developer to Defect"
+  }, {
+    "permissionId" : 62,
+    "action" : "DEFECT_STATUS_CHANGE",
+    "description" : "Change Defect Status"
+  }, {
+    "permissionId" : 63,
+    "action" : "DEFECT_COMMENT_CREATE",
+    "description" : "Add Defect Comment"
+  }, {
+    "permissionId" : 64,
+    "action" : "DEFECT_COMMENT_READ",
+    "description" : "View Defect Comments"
+  }, {
+    "permissionId" : 65,
+    "action" : "EMAIL_CONFIG_READ",
+    "description" : "View Email Configurations"
+  }, {
+    "permissionId" : 66,
+    "action" : "EMAIL_CONFIG_CREATE",
+    "description" : "Create Email Configuration"
+  }, {
+    "permissionId" : 67,
+    "action" : "EMAIL_CONFIG_UPDATE",
+    "description" : "Update Email Configuration"
+  }, {
+    "permissionId" : 68,
+    "action" : "EMAIL_CONFIG_DELETE",
+    "description" : "Delete Email Configuration"
+  }, {
+    "permissionId" : 69,
+    "action" : "CONFIG_READ",
+    "description" : "View system configurations"
+  }, {
+    "permissionId" : 70,
+    "action" : "CONFIG_UPDATE",
+    "description" : "Update system configurations"
+  }, {
+    "permissionId" : 71,
+    "action" : "ALL_PERMISSIONS",
+    "description" : "Full System Administrator Access"
+  } ]
+}

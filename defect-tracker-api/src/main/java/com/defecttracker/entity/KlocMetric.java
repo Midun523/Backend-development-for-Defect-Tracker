@@ -35,6 +35,7 @@ public class KlocMetric {
     private String frontendRepoUrl;
 
     @Column(name = "github_token", length = 255)
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private String githubToken;
 
     @Column(name = "github_username", length = 100)

@@ -5,6 +5,7 @@ import com.defecttracker.dto.request.EmailTemplateDTO;
 import com.defecttracker.dto.request.RoleNotificationUpdateDTO;
 import com.defecttracker.dto.request.UserExtraRulesUpdateDTO;
 import com.defecttracker.entity.*;
+import com.defecttracker.exception.BadRequestException;
 import com.defecttracker.exception.ResourceNotFoundException;
 import com.defecttracker.repository.*;
 import com.defecttracker.service.EmailService;
@@ -140,6 +141,9 @@ public class EmailServiceImpl implements EmailService {
         if (dto.getId() != null && dto.getId() > 0) {
             config = getConfigById(dto.getId());
         } else {
+            if (dto.getPassword() == null || dto.getPassword().trim().isEmpty()) {
+                throw new BadRequestException("Password is required for new SMTP configuration");
+            }
             config = new EmailConfig();
         }
 

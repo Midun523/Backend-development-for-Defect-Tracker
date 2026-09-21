@@ -1,0 +1,7 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "All KLOC records retrieved",
+  "statusMessage" : "All KLOC records retrieved",
+  "data" : [ ]
+}

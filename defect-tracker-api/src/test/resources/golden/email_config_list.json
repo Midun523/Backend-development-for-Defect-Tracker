@@ -1,0 +1,24 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "Email configs retrieved",
+  "statusMessage" : "Email configs retrieved",
+  "data" : [ {
+    "id" : 1,
+    "name" : "Default Local SMTP Server",
+    "smtpHost" : "smtp.gmail.com",
+    "smtpPort" : 587,
+    "username" : "notifications@defecttracker.com",
+    "fromEmail" : "notifications@defecttracker.com",
+    "fromName" : "Defect Tracker Pro",
+    "useTls" : true,
+    "useSsl" : false,
+    "passwordSet" : true,
+    "createdAt" : "2026-09-21T09:30:52.626287",
+    "updatedAt" : "2026-09-21T09:30:52.626287",
+    "isDefault" : true,
+    "default" : true,
+    "isActive" : true,
+    "active" : true
+  } ]
+}

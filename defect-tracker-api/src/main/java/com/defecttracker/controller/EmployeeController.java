@@ -2,8 +2,10 @@ package com.defecttracker.controller;
 
 import com.defecttracker.dto.request.EmployeeCreateRequest;
 import com.defecttracker.dto.response.ApiResponse;
+import com.defecttracker.dto.response.EmployeeResponse;
 import com.defecttracker.dto.response.PaginatedResponse;
 import com.defecttracker.entity.Employee;
+import com.defecttracker.mapper.EmployeeMapper;
 import com.defecttracker.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,47 +25,54 @@ import java.util.Map;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
+    private final EmployeeMapper employeeMapper;
 
     @PostMapping("/employee")
     @PreAuthorize("@access.has('EMPLOYEE_CREATE')")
     @Operation(summary = "Create a new employee with user credentials")
-    public ResponseEntity<ApiResponse<Employee>> createEmployee(@Valid @RequestBody EmployeeCreateRequest request) {
+    public ResponseEntity<ApiResponse<EmployeeResponse>> createEmployee(@Valid @RequestBody EmployeeCreateRequest request) {
         Employee employee = employeeService.createEmployee(request);
-        return ResponseEntity.ok(ApiResponse.created(employee, "Employee created successfully"));
+        return ResponseEntity.ok(ApiResponse.created(employeeMapper.toResponse(employee), "Employee created successfully"));
     }
 
     @GetMapping("/employee")
     @PreAuthorize("@access.has('EMPLOYEE_READ')")
     @Operation(summary = "Get employees with pagination and optional search query")
-    public ResponseEntity<ApiResponse<Object>> getEmployees(
+    public ResponseEntity<ApiResponse<PaginatedResponse<EmployeeResponse>>> getEmployees(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String query
     ) {
-        if (size >= 1000) {
-            return ResponseEntity.ok(ApiResponse.success(employeeService.getAllEmployeesList(), "Employees retrieved"));
-        }
         PaginatedResponse<Employee> response = employeeService.getAllEmployees(page, size, query);
-        return ResponseEntity.ok(ApiResponse.success(response, "Employees retrieved"));
+        PaginatedResponse<EmployeeResponse> dtoResponse = PaginatedResponse.<EmployeeResponse>builder()
+                .content(employeeMapper.toResponseList(response.getContent()))
+                .pageNumber(response.getPageNumber())
+                .pageSize(response.getPageSize())
+                .totalElements(response.getTotalElements())
+                .totalPages(response.getTotalPages())
+                .first(response.isFirst())
+                .last(response.isLast())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(dtoResponse, "Employees retrieved"));
     }
 
     @GetMapping("/employee/{id}")
     @PreAuthorize("@access.has('EMPLOYEE_READ')")
     @Operation(summary = "Get employee by ID")
-    public ResponseEntity<ApiResponse<Employee>> getEmployeeById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<EmployeeResponse>> getEmployeeById(@PathVariable Long id) {
         Employee employee = employeeService.getEmployeeById(id);
-        return ResponseEntity.ok(ApiResponse.success(employee, "Employee found"));
+        return ResponseEntity.ok(ApiResponse.success(employeeMapper.toResponse(employee), "Employee found"));
     }
 
     @PutMapping("/employee/{id}")
     @PreAuthorize("@access.has('EMPLOYEE_UPDATE')")
     @Operation(summary = "Update employee details")
-    public ResponseEntity<ApiResponse<Employee>> updateEmployee(
+    public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployee(
             @PathVariable Long id,
             @Valid @RequestBody EmployeeCreateRequest request
     ) {
         Employee employee = employeeService.updateEmployee(id, request);
-        return ResponseEntity.ok(ApiResponse.success(employee, "Employee updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(employeeMapper.toResponse(employee), "Employee updated successfully"));
     }
 
     @DeleteMapping("/employee/{id}")
@@ -77,47 +86,47 @@ public class EmployeeController {
     @PatchMapping("/employee/{id}/status")
     @PreAuthorize("@access.has('EMPLOYEE_UPDATE')")
     @Operation(summary = "Update employee status")
-    public ResponseEntity<ApiResponse<Employee>> updateEmployeeStatus(
+    public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployeeStatus(
             @PathVariable Long id,
             @RequestBody Map<String, String> statusBody
     ) {
         String status = statusBody.getOrDefault("status", "active");
         Employee employee = employeeService.updateEmployeeStatus(id, status);
-        return ResponseEntity.ok(ApiResponse.success(employee, "Employee status updated"));
+        return ResponseEntity.ok(ApiResponse.success(employeeMapper.toResponse(employee), "Employee status updated"));
     }
 
     @GetMapping("/bench")
     @PreAuthorize("@access.has('BENCH_READ')")
     @Operation(summary = "Get all available bench employees")
-    public ResponseEntity<ApiResponse<List<Employee>>> getBenchEmployees() {
+    public ResponseEntity<ApiResponse<List<EmployeeResponse>>> getBenchEmployees() {
         List<Employee> bench = employeeService.getBenchEmployees();
-        return ResponseEntity.ok(ApiResponse.success(bench, "Bench employees retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(employeeMapper.toResponseList(bench), "Bench employees retrieved"));
     }
 
     @GetMapping("/designation/{designationId}/employee")
     @PreAuthorize("@access.has('EMPLOYEE_READ')")
     @Operation(summary = "Get employees by designation")
-    public ResponseEntity<ApiResponse<List<Employee>>> getEmployeesByDesignation(@PathVariable Long designationId) {
+    public ResponseEntity<ApiResponse<List<EmployeeResponse>>> getEmployeesByDesignation(@PathVariable Long designationId) {
         List<Employee> employees = employeeService.getEmployeesByDesignation(designationId);
-        return ResponseEntity.ok(ApiResponse.success(employees, "Employees retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(employeeMapper.toResponseList(employees), "Employees retrieved"));
     }
 
     @GetMapping("/designation/{designationId}/available-managers")
     @PreAuthorize("@access.has('PROJECT_CREATE') or @access.has('EMPLOYEE_READ')")
     @Operation(summary = "Get available managers for a designation")
-    public ResponseEntity<ApiResponse<List<Employee>>> getAvailableManagers(@PathVariable Long designationId) {
+    public ResponseEntity<ApiResponse<List<EmployeeResponse>>> getAvailableManagers(@PathVariable Long designationId) {
         List<Employee> managers = employeeService.getAvailableManagers(designationId, null);
-        return ResponseEntity.ok(ApiResponse.success(managers, "Available managers retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(employeeMapper.toResponseList(managers), "Available managers retrieved"));
     }
 
     @GetMapping("/designation/{designationId}/available-managers/project/{projectId}")
     @PreAuthorize("@access.hasProjectAccess('PROJECT_UPDATE', #projectId)")
     @Operation(summary = "Get available managers for update on a project")
-    public ResponseEntity<ApiResponse<List<Employee>>> getAvailableManagersForUpdate(
+    public ResponseEntity<ApiResponse<List<EmployeeResponse>>> getAvailableManagersForUpdate(
             @PathVariable Long designationId,
             @PathVariable Long projectId
     ) {
         List<Employee> managers = employeeService.getAvailableManagers(designationId, projectId);
-        return ResponseEntity.ok(ApiResponse.success(managers, "Available managers retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(employeeMapper.toResponseList(managers), "Available managers retrieved"));
     }
 }

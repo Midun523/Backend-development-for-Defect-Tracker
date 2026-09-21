@@ -1,0 +1,33 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "Email templates retrieved",
+  "statusMessage" : "Email templates retrieved",
+  "data" : [ {
+    "id" : 1,
+    "templateName" : "DEFECT_ASSIGNED",
+    "subject" : "New Defect Assigned: [{defectId}] in {projectName}",
+    "bodyContent" : "<p>Hello <b>{name}</b>,</p><p>You have been assigned to defect <b>{defectId}</b> in project <b>{projectName}</b>.</p><p>Please log in to the Defect Tracker to review details and begin investigation.</p>",
+    "eventTrigger" : "DEFECT_ASSIGNED",
+    "variables" : "name,defectId,projectName",
+    "createdAt" : "2026-09-21T09:30:52.626287",
+    "updatedAt" : "2026-09-21T09:30:52.626287",
+    "isDefault" : true,
+    "default" : true,
+    "isActive" : true,
+    "active" : true
+  }, {
+    "id" : 2,
+    "templateName" : "PASSWORD_RESET",
+    "subject" : "Password Reset Request - Defect Tracker Pro",
+    "bodyContent" : "<p>Hello <b>{name}</b>,</p><p>Your password reset code is: <b>{token}</b>.</p><p>If you did not request this, please ignore this email.</p>",
+    "eventTrigger" : "PASSWORD_RESET",
+    "variables" : "name,token",
+    "createdAt" : "2026-09-21T09:30:52.626287",
+    "updatedAt" : "2026-09-21T09:30:52.626287",
+    "isDefault" : true,
+    "default" : true,
+    "isActive" : true,
+    "active" : true
+  } ]
+}

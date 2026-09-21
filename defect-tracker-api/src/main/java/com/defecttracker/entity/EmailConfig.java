@@ -33,6 +33,7 @@ public class EmailConfig {
     private String username;
 
     @Column(length = 255)
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Column(nullable = false, length = 150)

@@ -1,0 +1,13 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "Role found",
+  "statusMessage" : "Role found",
+  "data" : {
+    "id" : 1,
+    "roleName" : "Super Admin",
+    "type" : "System",
+    "description" : "Full administrative access across all projects and system settings",
+    "name" : "Super Admin"
+  }
+}

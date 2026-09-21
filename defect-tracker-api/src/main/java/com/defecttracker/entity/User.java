@@ -35,6 +35,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Column(length = 30)
@@ -53,6 +54,7 @@ public class User {
 
     @Builder.Default
     @Column(name = "must_change_password", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private Boolean mustChangePassword = false;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -73,12 +75,15 @@ public class User {
     private Integer resetCount = 0;
 
     @Column(name = "user_token", length = 500)
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private String userToken;
 
     @Column(name = "forgot_password_token", length = 255)
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private String forgotPasswordToken;
 
     @Column(name = "forgot_password_token_expiry")
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private LocalDateTime forgotPasswordTokenExpiry;
 
     @CreationTimestamp

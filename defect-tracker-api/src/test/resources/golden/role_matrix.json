@@ -1,0 +1,61 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "Role permission matrix retrieved",
+  "statusMessage" : "Role permission matrix retrieved",
+  "data" : [ {
+    "roleId" : 1,
+    "roleName" : "Super Admin",
+    "description" : "Full administrative access across all projects and system settings",
+    "permissionIds" : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71 ],
+    "permissions" : [ "DESIGNATION_CREATE", "DESIGNATION_UPDATE", "DESIGNATION_READ", "DESIGNATION_DELETE", "ROLE_CREATE", "ROLE_UPDATE", "ROLE_READ", "ROLE_DELETE", "PERMISSION_READ", "ROLE_PERMISSION_ASSIGN", "ROLE_PERMISSION_READ", "DEFECT_TYPE_CREATE", "DEFECT_TYPE_UPDATE", "DEFECT_TYPE_READ", "DEFECT_TYPE_DELETE", "RELEASE_TYPE_CREATE", "RELEASE_TYPE_UPDATE", "RELEASE_TYPE_READ", "RELEASE_TYPE_DELETE", "SEVERITY_CREATE", "SEVERITY_UPDATE", "SEVERITY_READ", "SEVERITY_DELETE", "PRIORITY_CREATE", "PRIORITY_UPDATE", "PRIORITY_READ", "PRIORITY_DELETE", "STATUS_TYPE_CREATE", "STATUS_TYPE_UPDATE", "STATUS_TYPE_READ", "STATUS_TYPE_DELETE", "WORKFLOW_CREATE", "WORKFLOW_READ", "WORKFLOW_UPDATE", "EMPLOYEE_CREATE", "EMPLOYEE_UPDATE", "EMPLOYEE_READ", "EMPLOYEE_DELETE", "BENCH_READ", "BENCH_ALLOCATE", "PROJECT_CREATE", "PROJECT_UPDATE", "PROJECT_READ", "PROJECT_DELETE", "MODULE_CREATE", "MODULE_UPDATE", "MODULE_READ", "MODULE_DELETE", "TEST_CASE_CREATE", "TEST_CASE_UPDATE", "TEST_CASE_READ", "TEST_CASE_DELETE", "RELEASE_CREATE", "RELEASE_UPDATE", "RELEASE_READ", "RELEASE_DELETE", "DEFECT_CREATE", "DEFECT_UPDATE", "DEFECT_READ", "DEFECT_DELETE", "DEFECT_ASSIGN_DEVELOPER", "DEFECT_STATUS_CHANGE", "DEFECT_COMMENT_CREATE", "DEFECT_COMMENT_READ", "EMAIL_CONFIG_READ", "EMAIL_CONFIG_CREATE", "EMAIL_CONFIG_UPDATE", "EMAIL_CONFIG_DELETE", "CONFIG_READ", "CONFIG_UPDATE", "ALL_PERMISSIONS" ]
+  }, {
+    "roleId" : 2,
+    "roleName" : "Project Manager",
+    "description" : "Manages projects, modules, and bench allocations",
+    "permissionIds" : [ 33, 37, 39, 40, 42, 43, 45, 46, 47, 48, 49, 50, 51, 53, 54, 55, 57, 58, 59 ],
+    "permissions" : [ "WORKFLOW_READ", "EMPLOYEE_READ", "BENCH_READ", "BENCH_ALLOCATE", "PROJECT_UPDATE", "PROJECT_READ", "MODULE_CREATE", "MODULE_UPDATE", "MODULE_READ", "MODULE_DELETE", "TEST_CASE_CREATE", "TEST_CASE_UPDATE", "TEST_CASE_READ", "RELEASE_CREATE", "RELEASE_UPDATE", "RELEASE_READ", "DEFECT_CREATE", "DEFECT_UPDATE", "DEFECT_READ" ]
+  }, {
+    "roleId" : 3,
+    "roleName" : "QA Lead",
+    "description" : "Leads QA efforts, releases, and test case reviews",
+    "permissionIds" : [ 33, 37, 39, 43, 47, 49, 50, 51, 52, 53, 54, 55, 57, 58, 59 ],
+    "permissions" : [ "WORKFLOW_READ", "EMPLOYEE_READ", "BENCH_READ", "PROJECT_READ", "MODULE_READ", "TEST_CASE_CREATE", "TEST_CASE_UPDATE", "TEST_CASE_READ", "TEST_CASE_DELETE", "RELEASE_CREATE", "RELEASE_UPDATE", "RELEASE_READ", "DEFECT_CREATE", "DEFECT_UPDATE", "DEFECT_READ" ]
+  }, {
+    "roleId" : 4,
+    "roleName" : "QA Engineer",
+    "description" : "Executes test cases and logs defects",
+    "permissionIds" : [ 33, 43, 47, 49, 50, 51, 54, 55, 57, 58, 59 ],
+    "permissions" : [ "WORKFLOW_READ", "PROJECT_READ", "MODULE_READ", "TEST_CASE_CREATE", "TEST_CASE_UPDATE", "TEST_CASE_READ", "RELEASE_UPDATE", "RELEASE_READ", "DEFECT_CREATE", "DEFECT_UPDATE", "DEFECT_READ" ]
+  }, {
+    "roleId" : 5,
+    "roleName" : "Developer",
+    "description" : "Fixes defects and implements modules",
+    "permissionIds" : [ 33, 43, 47, 51, 55, 58, 59 ],
+    "permissions" : [ "WORKFLOW_READ", "PROJECT_READ", "MODULE_READ", "TEST_CASE_READ", "RELEASE_READ", "DEFECT_UPDATE", "DEFECT_READ" ]
+  }, {
+    "roleId" : 6,
+    "roleName" : "Client",
+    "description" : "Client stakeholder role",
+    "permissionIds" : [ ],
+    "permissions" : [ ]
+  }, {
+    "roleId" : 7,
+    "roleName" : "ROLE_NO_PERM_CHAR",
+    "description" : "Role with zero permissions for characterization test",
+    "permissionIds" : [ ],
+    "permissions" : [ ]
+  }, {
+    "roleId" : 8,
+    "roleName" : "ROLE_UNIQUE_TEST_DUP",
+    "description" : "First insert",
+    "permissionIds" : [ ],
+    "permissions" : [ ]
+  }, {
+    "roleId" : 11,
+    "roleName" : "ROLE_NO_PERM_R2",
+    "description" : "Role with zero permissions for R2 test",
+    "permissionIds" : [ ],
+    "permissions" : [ ]
+  } ]
+}

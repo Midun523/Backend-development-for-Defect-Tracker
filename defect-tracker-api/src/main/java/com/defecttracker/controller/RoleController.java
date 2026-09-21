@@ -1,13 +1,17 @@
 package com.defecttracker.controller;
 
 import com.defecttracker.dto.request.RolePermissionAssignRequest;
+import com.defecttracker.dto.request.RoleRequest;
 import com.defecttracker.dto.response.ApiResponse;
 import com.defecttracker.dto.response.PaginatedResponse;
 import com.defecttracker.dto.response.RolePermissionMatrixResponse;
+import com.defecttracker.dto.response.RoleResponse;
 import com.defecttracker.entity.Role;
+import com.defecttracker.mapper.RoleMapper;
 import com.defecttracker.service.RoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,19 +26,21 @@ import java.util.List;
 public class RoleController {
 
     private final RoleService roleService;
+    private final RoleMapper roleMapper;
 
     @PostMapping("/role")
     @PreAuthorize("@access.has('ROLE_CREATE')")
     @Operation(summary = "Create role")
-    public ResponseEntity<ApiResponse<Role>> createRole(@RequestBody Role role) {
+    public ResponseEntity<ApiResponse<RoleResponse>> createRole(@Valid @RequestBody RoleRequest request) {
+        Role role = roleMapper.toEntity(request);
         Role created = roleService.createRole(role);
-        return ResponseEntity.ok(ApiResponse.created(created, "Role created successfully"));
+        return ResponseEntity.ok(ApiResponse.created(roleMapper.toResponse(created), "Role created successfully"));
     }
 
     @GetMapping("/role")
     @PreAuthorize("@access.has('ROLE_READ')")
     @Operation(summary = "Get roles paginated or all")
-    public ResponseEntity<ApiResponse<Object>> getRoles(
+    public ResponseEntity<ApiResponse<PaginatedResponse<RoleResponse>>> getRoles(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(defaultValue = "id") String sort,
@@ -42,11 +48,20 @@ public class RoleController {
     ) {
         if (page != null && size != null) {
             PaginatedResponse<Role> p = roleService.getRolesPaginated(page, size, sort, direction);
-            return ResponseEntity.ok(ApiResponse.success(p, "Roles retrieved"));
+            PaginatedResponse<RoleResponse> dtoPage = PaginatedResponse.<RoleResponse>builder()
+                    .content(roleMapper.toResponseList(p.getContent()))
+                    .pageNumber(p.getPageNumber())
+                    .pageSize(p.getPageSize())
+                    .totalElements(p.getTotalElements())
+                    .totalPages(p.getTotalPages())
+                    .first(p.isFirst())
+                    .last(p.isLast())
+                    .build();
+            return ResponseEntity.ok(ApiResponse.success(dtoPage, "Roles retrieved"));
         }
         List<Role> all = roleService.getAllRoles();
-        PaginatedResponse<Role> p = PaginatedResponse.<Role>builder()
-                .content(all)
+        PaginatedResponse<RoleResponse> p = PaginatedResponse.<RoleResponse>builder()
+                .content(roleMapper.toResponseList(all))
                 .pageNumber(0)
                 .pageSize(all.size())
                 .totalElements((long) all.size())
@@ -60,17 +75,18 @@ public class RoleController {
     @GetMapping("/role/{id}")
     @PreAuthorize("@access.has('ROLE_READ')")
     @Operation(summary = "Get role by ID")
-    public ResponseEntity<ApiResponse<Role>> getRoleById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<RoleResponse>> getRoleById(@PathVariable Long id) {
         Role role = roleService.getRoleById(id);
-        return ResponseEntity.ok(ApiResponse.success(role, "Role found"));
+        return ResponseEntity.ok(ApiResponse.success(roleMapper.toResponse(role), "Role found"));
     }
 
     @PutMapping("/role/{id}")
     @PreAuthorize("@access.has('ROLE_UPDATE')")
     @Operation(summary = "Update role")
-    public ResponseEntity<ApiResponse<Role>> updateRole(@PathVariable Long id, @RequestBody Role role) {
+    public ResponseEntity<ApiResponse<RoleResponse>> updateRole(@PathVariable Long id, @Valid @RequestBody RoleRequest request) {
+        Role role = roleMapper.toEntity(request);
         Role updated = roleService.updateRole(id, role);
-        return ResponseEntity.ok(ApiResponse.success(updated, "Role updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(roleMapper.toResponse(updated), "Role updated successfully"));
     }
 
     @DeleteMapping("/role/{id}")

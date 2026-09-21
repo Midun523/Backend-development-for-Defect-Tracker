@@ -5,9 +5,15 @@ import com.defecttracker.dto.request.EmailTemplateDTO;
 import com.defecttracker.dto.request.RoleNotificationUpdateDTO;
 import com.defecttracker.dto.request.UserExtraRulesUpdateDTO;
 import com.defecttracker.dto.response.ApiResponse;
+import com.defecttracker.dto.response.EmailConfigResponse;
+import com.defecttracker.dto.response.EmailLogResponse;
+import com.defecttracker.dto.response.EmailTemplateResponse;
 import com.defecttracker.entity.EmailConfig;
 import com.defecttracker.entity.EmailLog;
 import com.defecttracker.entity.EmailTemplate;
+import com.defecttracker.mapper.EmailConfigMapper;
+import com.defecttracker.mapper.EmailLogMapper;
+import com.defecttracker.mapper.EmailTemplateMapper;
 import com.defecttracker.service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,41 +33,49 @@ import java.util.Map;
 public class EmailConfigurationController {
 
     private final EmailService emailService;
+    private final EmailConfigMapper emailConfigMapper;
+    private final EmailTemplateMapper emailTemplateMapper;
+    private final EmailLogMapper emailLogMapper;
 
     @GetMapping("/email/config")
     @PreAuthorize("@access.has('EMAIL_CONFIG_READ') or @access.has('CONFIG_READ')")
     @Operation(summary = "Get all email SMTP configurations")
-    public ResponseEntity<ApiResponse<List<EmailConfig>>> getAllConfigs() {
-        return ResponseEntity.ok(ApiResponse.success(emailService.getAllConfigs(), "Email configs retrieved"));
+    public ResponseEntity<ApiResponse<List<EmailConfigResponse>>> getAllConfigs() {
+        List<EmailConfig> configs = emailService.getAllConfigs();
+        return ResponseEntity.ok(ApiResponse.success(emailConfigMapper.toResponseList(configs), "Email configs retrieved"));
     }
 
     @GetMapping("/email/config/{id}")
     @PreAuthorize("@access.has('EMAIL_CONFIG_READ') or @access.has('CONFIG_READ')")
     @Operation(summary = "Get email configuration by ID")
-    public ResponseEntity<ApiResponse<EmailConfig>> getConfigById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(emailService.getConfigById(id), "Email config found"));
+    public ResponseEntity<ApiResponse<EmailConfigResponse>> getConfigById(@PathVariable Long id) {
+        EmailConfig config = emailService.getConfigById(id);
+        return ResponseEntity.ok(ApiResponse.success(emailConfigMapper.toResponse(config), "Email config found"));
     }
 
     @PostMapping("/email/config")
     @PreAuthorize("@access.has('EMAIL_CONFIG_CREATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Create email configuration")
-    public ResponseEntity<ApiResponse<EmailConfig>> createConfig(@Valid @RequestBody EmailConfigDTO dto) {
-        return ResponseEntity.ok(ApiResponse.created(emailService.saveConfig(dto), "Email config created"));
+    public ResponseEntity<ApiResponse<EmailConfigResponse>> createConfig(@Valid @RequestBody EmailConfigDTO dto) {
+        EmailConfig created = emailService.saveConfig(dto);
+        return ResponseEntity.ok(ApiResponse.created(emailConfigMapper.toResponse(created), "Email config created"));
     }
 
     @PutMapping("/email/config/{id}")
     @PreAuthorize("@access.has('EMAIL_CONFIG_UPDATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Update email configuration")
-    public ResponseEntity<ApiResponse<EmailConfig>> updateConfig(@PathVariable Long id, @Valid @RequestBody EmailConfigDTO dto) {
+    public ResponseEntity<ApiResponse<EmailConfigResponse>> updateConfig(@PathVariable Long id, @Valid @RequestBody EmailConfigDTO dto) {
         dto.setId(id);
-        return ResponseEntity.ok(ApiResponse.success(emailService.saveConfig(dto), "Email config updated"));
+        EmailConfig updated = emailService.saveConfig(dto);
+        return ResponseEntity.ok(ApiResponse.success(emailConfigMapper.toResponse(updated), "Email config updated"));
     }
 
     @PatchMapping("/email/config/{id}/enable")
     @PreAuthorize("@access.has('EMAIL_CONFIG_UPDATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Enable and set default email configuration")
-    public ResponseEntity<ApiResponse<EmailConfig>> enableConfig(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(emailService.enableConfig(id), "Email config enabled"));
+    public ResponseEntity<ApiResponse<EmailConfigResponse>> enableConfig(@PathVariable Long id) {
+        EmailConfig enabled = emailService.enableConfig(id);
+        return ResponseEntity.ok(ApiResponse.success(emailConfigMapper.toResponse(enabled), "Email config enabled"));
     }
 
     @DeleteMapping("/email/config/{id}")
@@ -75,37 +89,42 @@ public class EmailConfigurationController {
     @GetMapping("/email/template")
     @PreAuthorize("@access.has('EMAIL_CONFIG_READ') or @access.has('CONFIG_READ')")
     @Operation(summary = "Get all email templates")
-    public ResponseEntity<ApiResponse<List<EmailTemplate>>> getAllTemplates() {
-        return ResponseEntity.ok(ApiResponse.success(emailService.getAllTemplates(), "Email templates retrieved"));
+    public ResponseEntity<ApiResponse<List<EmailTemplateResponse>>> getAllTemplates() {
+        List<EmailTemplate> templates = emailService.getAllTemplates();
+        return ResponseEntity.ok(ApiResponse.success(emailTemplateMapper.toResponseList(templates), "Email templates retrieved"));
     }
 
     @GetMapping("/email/template/{id}")
     @PreAuthorize("@access.has('EMAIL_CONFIG_READ') or @access.has('CONFIG_READ')")
     @Operation(summary = "Get email template by ID")
-    public ResponseEntity<ApiResponse<EmailTemplate>> getTemplateById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(emailService.getTemplateById(id), "Email template found"));
+    public ResponseEntity<ApiResponse<EmailTemplateResponse>> getTemplateById(@PathVariable Long id) {
+        EmailTemplate template = emailService.getTemplateById(id);
+        return ResponseEntity.ok(ApiResponse.success(emailTemplateMapper.toResponse(template), "Email template found"));
     }
 
     @PostMapping("/email/template")
     @PreAuthorize("@access.has('EMAIL_CONFIG_CREATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Create email template")
-    public ResponseEntity<ApiResponse<EmailTemplate>> createTemplate(@Valid @RequestBody EmailTemplateDTO dto) {
-        return ResponseEntity.ok(ApiResponse.created(emailService.saveTemplate(dto), "Email template created"));
+    public ResponseEntity<ApiResponse<EmailTemplateResponse>> createTemplate(@Valid @RequestBody EmailTemplateDTO dto) {
+        EmailTemplate created = emailService.saveTemplate(dto);
+        return ResponseEntity.ok(ApiResponse.created(emailTemplateMapper.toResponse(created), "Email template created"));
     }
 
     @PutMapping("/email/template/{id}")
     @PreAuthorize("@access.has('EMAIL_CONFIG_UPDATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Update email template")
-    public ResponseEntity<ApiResponse<EmailTemplate>> updateTemplate(@PathVariable Long id, @Valid @RequestBody EmailTemplateDTO dto) {
+    public ResponseEntity<ApiResponse<EmailTemplateResponse>> updateTemplate(@PathVariable Long id, @Valid @RequestBody EmailTemplateDTO dto) {
         dto.setId(id);
-        return ResponseEntity.ok(ApiResponse.success(emailService.saveTemplate(dto), "Email template updated"));
+        EmailTemplate updated = emailService.saveTemplate(dto);
+        return ResponseEntity.ok(ApiResponse.success(emailTemplateMapper.toResponse(updated), "Email template updated"));
     }
 
     @PatchMapping("/email/template/{id}/reset")
     @PreAuthorize("@access.has('EMAIL_CONFIG_UPDATE') or @access.has('CONFIG_UPDATE')")
     @Operation(summary = "Reset email template to default body")
-    public ResponseEntity<ApiResponse<EmailTemplate>> resetTemplate(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(emailService.resetTemplate(id), "Email template reset"));
+    public ResponseEntity<ApiResponse<EmailTemplateResponse>> resetTemplate(@PathVariable Long id) {
+        EmailTemplate reset = emailService.resetTemplate(id);
+        return ResponseEntity.ok(ApiResponse.success(emailTemplateMapper.toResponse(reset), "Email template reset"));
     }
 
     @GetMapping("/email/template/{templateId}/variable")
@@ -118,8 +137,9 @@ public class EmailConfigurationController {
     @GetMapping(value = {"/email/log", "/email/sent"})
     @PreAuthorize("@access.has('EMAIL_CONFIG_READ') or @access.has('CONFIG_READ')")
     @Operation(summary = "Get email delivery logs")
-    public ResponseEntity<ApiResponse<List<EmailLog>>> getEmailLogs() {
-        return ResponseEntity.ok(ApiResponse.success(emailService.getAllLogs(), "Email logs retrieved"));
+    public ResponseEntity<ApiResponse<List<EmailLogResponse>>> getEmailLogs() {
+        List<EmailLog> logs = emailService.getAllLogs();
+        return ResponseEntity.ok(ApiResponse.success(emailLogMapper.toResponseList(logs), "Email logs retrieved"));
     }
 
     @GetMapping("/email/recipients/role/matrix")

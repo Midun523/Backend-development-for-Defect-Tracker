@@ -1,0 +1,11 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "Permission found",
+  "statusMessage" : "Permission found",
+  "data" : {
+    "permissionId" : 1,
+    "action" : "DESIGNATION_CREATE",
+    "description" : "Create Designation"
+  }
+}

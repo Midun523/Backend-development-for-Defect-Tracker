@@ -1,9 +1,11 @@
 package com.defecttracker.controller;
 
 import com.defecttracker.dto.response.ApiResponse;
+import com.defecttracker.dto.response.KlocMetricResponse;
 import com.defecttracker.entity.KlocMetric;
 import com.defecttracker.entity.Project;
 import com.defecttracker.exception.ResourceNotFoundException;
+import com.defecttracker.mapper.KlocMetricMapper;
 import com.defecttracker.repository.KlocMetricRepository;
 import com.defecttracker.repository.ProjectRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,35 +26,38 @@ public class KlocController {
 
     private final KlocMetricRepository klocMetricRepo;
     private final ProjectRepository projectRepo;
+    private final KlocMetricMapper klocMetricMapper;
 
     @GetMapping("/project/{projectId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @PreAuthorize("@access.hasProjectAccess('PROJECT_READ', #projectId)")
     @Operation(summary = "Get KLOC metrics for a project")
-    public ResponseEntity<ApiResponse<KlocMetric>> getProjectKloc(@PathVariable Long projectId) {
+    public ResponseEntity<ApiResponse<KlocMetricResponse>> getProjectKloc(@PathVariable Long projectId) {
         KlocMetric metric = klocMetricRepo.findFirstByProjectIdOrderByCreatedAtDesc(projectId)
                 .orElse(null);
-        return ResponseEntity.ok(ApiResponse.success(metric, "KLOC metrics retrieved"));
+        return ResponseEntity.ok(ApiResponse.success(klocMetricMapper.toResponse(metric), "KLOC metrics retrieved"));
     }
 
     @PostMapping("/project/{projectId}")
+    @org.springframework.transaction.annotation.Transactional
     @PreAuthorize("@access.hasProjectAccess('PROJECT_UPDATE', #projectId)")
     @Operation(summary = "Save or update KLOC metrics for a project")
-    public ResponseEntity<ApiResponse<KlocMetric>> saveProjectKloc(
+    public ResponseEntity<ApiResponse<KlocMetricResponse>> saveProjectKloc(
             @PathVariable Long projectId,
-            @RequestBody Map<String, Object> body
+            @RequestBody com.defecttracker.dto.request.KlocMetricRequest request
     ) {
         Project project = projectRepo.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", "id", projectId));
 
-        String backendRepoUrl = (String) body.get("backendRepoUrl");
-        String frontendRepoUrl = (String) body.get("frontendRepoUrl");
-        String githubToken = (String) body.get("githubToken");
-        String githubUsername = (String) body.get("githubUsername");
-        Double calculatedKloc = body.get("calculatedKloc") != null
-                ? Double.valueOf(body.get("calculatedKloc").toString())
+        String backendRepoUrl = request.getBackendRepoUrl();
+        String frontendRepoUrl = request.getFrontendRepoUrl();
+        String githubToken = request.getGithubToken();
+        String githubUsername = request.getGithubUsername();
+        Double calculatedKloc = request.getCalculatedKloc() != null
+                ? request.getCalculatedKloc()
                 : 0.0;
-        Long totalLoc = body.get("totalLinesOfCode") != null
-                ? Long.valueOf(body.get("totalLinesOfCode").toString())
+        Long totalLoc = request.getTotalLinesOfCode() != null
+                ? request.getTotalLinesOfCode()
                 : (long) (calculatedKloc * 1000);
 
         KlocMetric metric = klocMetricRepo.findFirstByProjectIdOrderByCreatedAtDesc(projectId)
@@ -71,13 +76,14 @@ public class KlocController {
         project.setKloc(calculatedKloc);
         projectRepo.save(project);
 
-        return ResponseEntity.ok(ApiResponse.success(saved, "KLOC metrics updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(klocMetricMapper.toResponse(saved), "KLOC metrics updated successfully"));
     }
 
     @GetMapping
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @PreAuthorize("@access.has('PROJECT_READ')")
     @Operation(summary = "Get all KLOC records")
-    public ResponseEntity<ApiResponse<List<KlocMetric>>> getAllKlocRecords() {
-        return ResponseEntity.ok(ApiResponse.success(klocMetricRepo.findAll(), "All KLOC records retrieved"));
+    public ResponseEntity<ApiResponse<List<KlocMetricResponse>>> getAllKlocRecords() {
+        return ResponseEntity.ok(ApiResponse.success(klocMetricMapper.toResponseList(klocMetricRepo.findAll()), "All KLOC records retrieved"));
     }
 }

@@ -1,0 +1,20 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "Email template found",
+  "statusMessage" : "Email template found",
+  "data" : {
+    "id" : 1,
+    "templateName" : "DEFECT_ASSIGNED",
+    "subject" : "New Defect Assigned: [{defectId}] in {projectName}",
+    "bodyContent" : "<p>Hello <b>{name}</b>,</p><p>You have been assigned to defect <b>{defectId}</b> in project <b>{projectName}</b>.</p><p>Please log in to the Defect Tracker to review details and begin investigation.</p>",
+    "eventTrigger" : "DEFECT_ASSIGNED",
+    "variables" : "name,defectId,projectName",
+    "createdAt" : "2026-09-21T09:30:52.626287",
+    "updatedAt" : "2026-09-21T09:30:52.626287",
+    "isDefault" : true,
+    "default" : true,
+    "isActive" : true,
+    "active" : true
+  }
+}

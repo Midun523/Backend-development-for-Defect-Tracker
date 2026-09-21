@@ -1,0 +1,71 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "Employees retrieved",
+  "statusMessage" : "Employees retrieved",
+  "data" : {
+    "content" : [ {
+      "id" : 1,
+      "user" : {
+        "id" : 1,
+        "userId" : "US0001",
+        "firstName" : "Super",
+        "lastName" : "Admin",
+        "email" : "admin@defecttracker.com",
+        "phone" : "+1 555-0199",
+        "gender" : "Male",
+        "userStatus" : "ACTIVE",
+        "userType" : "CompanyStaff",
+        "designation" : {
+          "id" : 1,
+          "designationName" : "Project Manager",
+          "description" : "Oversees projects, schedules and resource management",
+          "totalEmployees" : 0,
+          "name" : "Project Manager"
+        },
+        "roles" : [ {
+          "id" : 1,
+          "roleName" : "Super Admin",
+          "type" : "System",
+          "description" : "Full administrative access across all projects and system settings",
+          "name" : "Super Admin"
+        } ],
+        "resetCount" : 0,
+        "createdAt" : "2026-09-21T09:30:56.993964",
+        "updatedAt" : "2026-09-21T09:30:56.993964"
+      },
+      "firstName" : "Super",
+      "lastName" : "Admin",
+      "email" : "admin@defecttracker.com",
+      "phone" : "+1 555-0199",
+      "gender" : "Male",
+      "designation" : {
+        "id" : 1,
+        "designationName" : "Project Manager",
+        "description" : "Oversees projects, schedules and resource management",
+        "totalEmployees" : 0,
+        "name" : "Project Manager"
+      },
+      "experience" : 8.5,
+      "joinedDate" : "2023-09-21",
+      "skills" : "Spring Boot,PostgreSQL,React,TypeScript,System Architecture",
+      "availability" : 100,
+      "status" : "active",
+      "department" : "Engineering",
+      "manager" : "Executive Board",
+      "startDate" : null,
+      "endDate" : null,
+      "whatsappNumber" : null,
+      "resetCount" : 0,
+      "address" : null,
+      "createdAt" : "2026-09-21T09:30:57.014096",
+      "updatedAt" : "2026-09-21T09:30:57.014096"
+    } ],
+    "pageNumber" : 0,
+    "pageSize" : 10,
+    "totalElements" : 1,
+    "totalPages" : 1,
+    "last" : true,
+    "first" : true
+  }
+}

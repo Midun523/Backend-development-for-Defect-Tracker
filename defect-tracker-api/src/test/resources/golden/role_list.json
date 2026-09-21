@@ -1,0 +1,69 @@
+{
+  "status" : "success",
+  "statusCode" : 200,
+  "message" : "Roles retrieved",
+  "statusMessage" : "Roles retrieved",
+  "data" : {
+    "content" : [ {
+      "id" : 1,
+      "roleName" : "Super Admin",
+      "type" : "System",
+      "description" : "Full administrative access across all projects and system settings",
+      "name" : "Super Admin"
+    }, {
+      "id" : 2,
+      "roleName" : "Project Manager",
+      "type" : "Project",
+      "description" : "Manages projects, modules, and bench allocations",
+      "name" : "Project Manager"
+    }, {
+      "id" : 3,
+      "roleName" : "QA Lead",
+      "type" : "QA",
+      "description" : "Leads QA efforts, releases, and test case reviews",
+      "name" : "QA Lead"
+    }, {
+      "id" : 4,
+      "roleName" : "QA Engineer",
+      "type" : "QA",
+      "description" : "Executes test cases and logs defects",
+      "name" : "QA Engineer"
+    }, {
+      "id" : 5,
+      "roleName" : "Developer",
+      "type" : "Engineering",
+      "description" : "Fixes defects and implements modules",
+      "name" : "Developer"
+    }, {
+      "id" : 6,
+      "roleName" : "Client",
+      "type" : "External",
+      "description" : "Client stakeholder role",
+      "name" : "Client"
+    }, {
+      "id" : 7,
+      "roleName" : "ROLE_NO_PERM_CHAR",
+      "type" : null,
+      "description" : "Role with zero permissions for characterization test",
+      "name" : "ROLE_NO_PERM_CHAR"
+    }, {
+      "id" : 8,
+      "roleName" : "ROLE_UNIQUE_TEST_DUP",
+      "type" : null,
+      "description" : "First insert",
+      "name" : "ROLE_UNIQUE_TEST_DUP"
+    }, {
+      "id" : 11,
+      "roleName" : "ROLE_NO_PERM_R2",
+      "type" : null,
+      "description" : "Role with zero permissions for R2 test",
+      "name" : "ROLE_NO_PERM_R2"
+    } ],
+    "pageNumber" : 0,
+    "pageSize" : 9,
+    "totalElements" : 9,
+    "totalPages" : 1,
+    "last" : true,
+    "first" : true
+  }
+}

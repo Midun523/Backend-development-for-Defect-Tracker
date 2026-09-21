@@ -75,12 +75,15 @@ public class Employee {
     @Column(name = "reset_count")
     private Integer resetCount = 0;
 
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     @Column(name = "user_token", length = 500)
     private String userToken;
 
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     @Column(name = "forgot_password_token", length = 255)
     private String forgotPasswordToken;
 
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     @Column(name = "forgot_password_token_expiry")
     private LocalDateTime forgotPasswordTokenExpiry;
 
